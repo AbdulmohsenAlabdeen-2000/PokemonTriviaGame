@@ -32,6 +32,56 @@ const POOL_HARD = [
   227, 254, 376, 384, 445, 484, 487, 491, 530, 571, 658, 700, 716, 786, 887
 ];
 
+/**
+ * Evolution-only pools. Every Pokémon listed here is a PRE-evolution form
+ * (i.e. evolves_to is non-empty in its evolution chain), which is what
+ * genEvolution requires. Without this curated list the Evolutions category
+ * was coming up short whenever the random pool happened to land on a
+ * fully-evolved Pokémon — null returns can't fill a 6-tile column.
+ */
+const EVO_POOL_EASY = [
+  1,   // Bulbasaur → Ivysaur
+  4,   // Charmander → Charmeleon
+  7,   // Squirtle → Wartortle
+  25,  // Pikachu → Raichu
+  39,  // Jigglypuff → Wigglytuff
+  52,  // Meowth → Persian
+  133, // Eevee → multiple
+  16,  // Pidgey → Pidgeotto
+  19,  // Rattata → Raticate
+  23,  // Ekans → Arbok
+  27,  // Sandshrew → Sandslash
+  35   // Clefairy → Clefable
+];
+const EVO_POOL_MEDIUM = [
+  2,   // Ivysaur → Venusaur
+  5,   // Charmeleon → Charizard
+  8,   // Wartortle → Blastoise
+  17,  // Pidgeotto → Pidgeot
+  30,  // Nidorina → Nidoqueen
+  33,  // Nidorino → Nidoking
+  41,  // Zubat → Golbat
+  64,  // Kadabra → Alakazam
+  67,  // Machoke → Machamp
+  75,  // Graveler → Golem
+  92,  // Gastly → Haunter
+  93   // Haunter → Gengar
+];
+const EVO_POOL_HARD = [
+  50,  // Diglett → Dugtrio
+  60,  // Poliwag → Poliwhirl
+  100, // Voltorb → Electrode
+  111, // Rhyhorn → Rhydon
+  116, // Horsea → Seadra
+  118, // Goldeen → Seaking
+  175, // Togepi → Togetic
+  280, // Ralts → Kirlia
+  296, // Makuhita → Hariyama
+  446, // Munchlax → Snorlax
+  447, // Riolu → Lucario
+  519  // Pidove → Tranquill
+];
+
 const ITEM_POOL_EASY = [
   { slug: "poke-ball",  name: "Poké Ball" },
   { slug: "great-ball", name: "Great Ball" },
@@ -315,19 +365,32 @@ export async function buildGameQuestionsFromAPI(): Promise<Question[]> {
 
   const allBalls = [...ITEM_POOL_EASY, ...ITEM_POOL_MEDIUM, ...ITEM_POOL_HARD];
 
-  // Build per-category question lists. Each category gets 2 easy + 2 medium + 2 hard.
-  // For evolution questions we need to retry on Pokémon that don't evolve.
-  async function pair<T>(
+  // Curated pools used ONLY for evolution questions — every entry has a
+  // next evolution, so genEvolution can't return null on these.
+  const evoEasyIds   = shuffle(EVO_POOL_EASY).slice(0, 12);
+  const evoMediumIds = shuffle(EVO_POOL_MEDIUM).slice(0, 12);
+  const evoHardIds   = shuffle(EVO_POOL_HARD).slice(0, 12);
+
+  /**
+   * Try generators in sequence until we get `needed` questions. Each
+   * individual generator call is wrapped in try/catch so a single PokeAPI
+   * blip (network glitch, 5xx) can't shrink an entire category — we just
+   * skip the failed id and try the next one in the pool.
+   */
+  async function pair(
     pool: number[],
     difficulty: Difficulty,
     gen: (id: number, d: Difficulty, pool: number[]) => Promise<Question | null>,
     needed = 2
   ): Promise<Question[]> {
     const out: Question[] = [];
-    let cursor = 0;
-    while (out.length < needed && cursor < pool.length) {
-      const q = await gen(pool[cursor++], difficulty, pool);
-      if (q) out.push(q);
+    for (let i = 0; i < pool.length && out.length < needed; i++) {
+      try {
+        const q = await gen(pool[i], difficulty, pool);
+        if (q) out.push(q);
+      } catch {
+        // skip this id and try the next one
+      }
     }
     return out;
   }
@@ -340,40 +403,30 @@ export async function buildGameQuestionsFromAPI(): Promise<Question[]> {
     ballsE, ballsM, ballsH,
     colsE,  colsM,  colsH
   ] = await Promise.all([
-    pair(easyIds.slice(0, 4),   "easy",   genName),
-    pair(mediumIds.slice(0, 4), "medium", genName),
-    pair(hardIds.slice(0, 4),   "hard",   genName),
+    pair(easyIds.slice(0, 6),   "easy",   genName),
+    pair(mediumIds.slice(0, 6), "medium", genName),
+    pair(hardIds.slice(0, 6),   "hard",   genName),
 
-    pair(easyIds.slice(4, 8),   "easy",   genType),
-    pair(mediumIds.slice(4, 8), "medium", genType),
-    pair(hardIds.slice(4, 8),   "hard",   genType),
+    pair(easyIds.slice(4, 10),  "easy",   genType),
+    pair(mediumIds.slice(4, 10),"medium", genType),
+    pair(hardIds.slice(4, 10),  "hard",   genType),
 
-    pair(easyIds.slice(0, 12),  "easy",   genEvolution, 2),
-    pair(mediumIds.slice(0, 12),"medium", genEvolution, 2),
-    pair(hardIds.slice(0, 12),  "hard",   genEvolution, 2),
+    pair(evoEasyIds,   "easy",   genEvolution, 2),
+    pair(evoMediumIds, "medium", genEvolution, 2),
+    pair(evoHardIds,   "hard",   genEvolution, 2),
 
-    pair(easyIds.slice(8, 12),  "easy",   genStat),
-    pair(mediumIds.slice(8, 12),"medium", genStat),
-    pair(hardIds.slice(8, 12),  "hard",   genStat),
+    pair(easyIds.slice(6, 12),  "easy",   genStat),
+    pair(mediumIds.slice(6, 12),"medium", genStat),
+    pair(hardIds.slice(6, 12),  "hard",   genStat),
 
     Promise.all(ITEM_POOL_EASY.slice(0, 2).map((b) => genBall(b, "easy",   allBalls))),
     Promise.all(ITEM_POOL_MEDIUM.slice(0, 2).map((b) => genBall(b, "medium", allBalls))),
     Promise.all(ITEM_POOL_HARD.slice(0, 2).map((b) => genBall(b, "hard",    allBalls))),
 
-    pair(easyIds.slice(0, 4),   "easy",   genColor),
-    pair(mediumIds.slice(0, 4), "medium", genColor),
-    pair(hardIds.slice(0, 4),   "hard",   genColor)
+    pair(easyIds.slice(0, 6),   "easy",   genColor),
+    pair(mediumIds.slice(0, 6), "medium", genColor),
+    pair(hardIds.slice(0, 6),   "hard",   genColor)
   ]);
-
-  // Ensure every bucket has 2 questions. If a generator returned fewer
-  // (e.g. evolutions on Pokémon that don't evolve), pad from another bucket.
-  function pad(out: Question[], filler: Question[]): Question[] {
-    while (out.length < 2 && filler.length) out.push(filler.pop()!);
-    return out;
-  }
-  pad(evosE, [...statsE]);
-  pad(evosM, [...statsM]);
-  pad(evosH, [...statsH]);
 
   const grouped: Record<Category, Question[]> = {
     Pokemon:    [...namesE, ...namesM, ...namesH],
