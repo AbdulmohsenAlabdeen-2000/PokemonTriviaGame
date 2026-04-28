@@ -6,10 +6,10 @@ import { audio } from "@/lib/audio";
 import {
   CATEGORIES,
   HARD_WRONG_PENALTY,
-  QUESTIONS,
   categoryMeta,
   type Question
 } from "@/lib/questions";
+import { buildGameQuestionsFromAPI } from "@/lib/trivia-generator";
 import { spriteFor, starterById } from "@/lib/pokedex";
 import type { SetupResult } from "@/components/stages/Setup";
 
@@ -33,10 +33,12 @@ export type FinalResult = {
   p2: { name: string; starterDexId: number; score: number };
 };
 
-type Phase = "board" | "picker" | "challenger" | "reveal" | "done";
+type Phase = "loading" | "load-error" | "board" | "picker" | "challenger" | "reveal" | "done";
 
 type State = {
   phase: Phase;
+  /** All 36 questions for this game — fetched from PokeAPI on mount. */
+  questions: Question[];
   /** Player who picked the tile and answers first (60s). */
   pickerIdx: 0 | 1;
   scores: [number, number];
@@ -53,9 +55,13 @@ type State = {
   lastDeltas: [number, number];
   timeLeft: number;
   warningFired: boolean;
+  /** Error message from the trivia-generator if the API fetch failed. */
+  loadError: string | null;
 };
 
 type Action =
+  | { type: "QUESTIONS_LOADED"; questions: Question[] }
+  | { type: "QUESTIONS_FAILED"; error: string }
   | { type: "PICK"; question: Question }
   | { type: "PICKER_ANSWER"; option: 0 | 1 | 2 | 3 }
   | { type: "CHALLENGER_ANSWER"; option: 0 | 1 | 2 | 3 }
@@ -88,6 +94,13 @@ function deltaFor(pick: 0 | 1 | 2 | 3 | null, q: Question): number {
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
+    case "QUESTIONS_LOADED": {
+      if (state.phase !== "loading") return state;
+      return { ...state, phase: "board", questions: action.questions, loadError: null };
+    }
+    case "QUESTIONS_FAILED": {
+      return { ...state, phase: "load-error", loadError: action.error };
+    }
     case "PICK": {
       if (state.phase !== "board") return state;
       if (state.used.has(action.question.id)) return state;
@@ -166,7 +179,7 @@ function reducer(state: State, action: Action): State {
       if (state.phase !== "reveal" || state.current == null) return state;
       const used = new Set(state.used);
       used.add(state.current.id);
-      const allDone = used.size >= QUESTIONS.length;
+      const allDone = used.size >= state.questions.length;
       const nextPicker = (state.pickerIdx === 0 ? 1 : 0) as 0 | 1;
       if (allDone) return { ...state, phase: "done", used };
       return {
@@ -197,7 +210,8 @@ export default function Play({
   onDone: (r: FinalResult) => void;
 }) {
   const [state, dispatch] = useReducer(reducer, undefined as never, () => ({
-    phase: "board" as Phase,
+    phase: "loading" as Phase,
+    questions: [] as Question[],
     pickerIdx: 0 as 0 | 1,
     scores: [0, 0] as [number, number],
     used: new Set<string>(),
@@ -208,8 +222,24 @@ export default function Play({
     challengerCorrect: false,
     lastDeltas: [0, 0] as [number, number],
     timeLeft: PICKER_TIME,
-    warningFired: false
+    warningFired: false,
+    loadError: null
   }));
+
+  // Fetch questions from PokeAPI on mount.
+  useEffect(() => {
+    let cancelled = false;
+    buildGameQuestionsFromAPI()
+      .then((questions) => {
+        if (cancelled) return;
+        dispatch({ type: "QUESTIONS_LOADED", questions });
+      })
+      .catch((err: Error) => {
+        if (cancelled) return;
+        dispatch({ type: "QUESTIONS_FAILED", error: err?.message || "Failed to load PokeAPI" });
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   const p1Star = starterById(setup.p1.starter);
   const p2Star = starterById(setup.p2.starter);
@@ -217,11 +247,13 @@ export default function Play({
   // ---------- Music switching: only ONE track at a time ----------
   useEffect(() => { audio().preload([25, 202]); }, []);
   useEffect(() => {
-    if (state.phase === "board")           audio().playLobby();
-    else if (state.phase === "picker")     audio().playBattle();   // YT (or synth fallback)
-    else if (state.phase === "challenger") {/* keep battle music going */ }
-    else if (state.phase === "reveal")     audio().stopMusic();
-    else if (state.phase === "done")       audio().stopMusic();
+    if (state.phase === "loading")          audio().playLobby();
+    else if (state.phase === "load-error")  audio().stopMusic();
+    else if (state.phase === "board")       audio().playLobby();
+    else if (state.phase === "picker")      audio().playBattle();   // YT (or synth fallback)
+    else if (state.phase === "challenger")  {/* keep battle music going */ }
+    else if (state.phase === "reveal")      audio().stopMusic();
+    else if (state.phase === "done")        audio().stopMusic();
   }, [state.phase]);
 
   // ---------- Timer ----------
@@ -291,6 +323,14 @@ export default function Play({
   // ---------- Render ----------
   const challengerIdx = (state.pickerIdx === 0 ? 1 : 0) as 0 | 1;
 
+  // Loading + error screens come before the regular play layout.
+  if (state.phase === "loading") {
+    return <LoadingScreen />;
+  }
+  if (state.phase === "load-error") {
+    return <ErrorScreen message={state.loadError || "Unknown error"} />;
+  }
+
   return (
     <div className="play-grid stage">
       {/* LEFT — board OR question card */}
@@ -298,6 +338,7 @@ export default function Play({
         {(state.phase === "board" || state.phase === "done") && (
           <Board
             used={state.used}
+            questions={state.questions}
             pickerName={state.pickerIdx === 0 ? setup.p1.name : setup.p2.name}
             pickerColor={state.pickerIdx === 0 ? "var(--color-poke-red)" : "var(--color-poke-blue)"}
             done={state.phase === "done"}
@@ -366,7 +407,7 @@ export default function Play({
         <div className="hud-pill" style={{ textAlign: "center" }}>
           {state.phase === "done"
             ? "Battle complete"
-            : `${QUESTIONS.length - state.used.size} questions left`}
+            : `${state.questions.length - state.used.size} questions left`}
         </div>
       </aside>
     </div>
@@ -379,12 +420,14 @@ export default function Play({
 
 function Board({
   used,
+  questions,
   pickerName,
   pickerColor,
   done,
   onPick
 }: {
   used: Set<string>;
+  questions: Question[];
   pickerName: string;
   pickerColor: string;
   done: boolean;
@@ -403,7 +446,7 @@ function Board({
       </div>
       <div className="board" role="grid" aria-label="Trivia board">
         {CATEGORIES.map((cat) => {
-          const cells = QUESTIONS
+          const cells = questions
             .filter((q) => q.category === cat.id)
             .sort((a, b) => a.value - b.value);
           return (
@@ -675,5 +718,51 @@ function TeamPanel({
         </div>
       </div>
     </div>
+  );
+}
+
+// Loading screen — shown while we fetch question data from PokeAPI on mount.
+function LoadingScreen() {
+  return (
+    <section className="card stage" style={{ textAlign: "center" }}>
+      <div className="loading-pokeball" aria-hidden="true">
+        <div className="lp-top" />
+        <div className="lp-bottom" />
+        <div className="lp-belt" />
+        <div className="lp-button" />
+      </div>
+      <h2 className="title" style={{ fontSize: "clamp(22px, 4vw, 36px)", marginTop: 8 }}>
+        Loading Pokémon data…
+      </h2>
+      <p className="subtitle" style={{ marginTop: 6 }}>
+        Building 36 fresh questions from PokeAPI.
+      </p>
+    </section>
+  );
+}
+
+// Error screen — shown if the PokeAPI fetch fails (network down, etc.).
+function ErrorScreen({ message }: { message: string }) {
+  return (
+    <section className="card stage" style={{ textAlign: "center" }}>
+      <div className="crown" style={{ fontSize: 64 }}>⚠️</div>
+      <h2 className="title" style={{ fontSize: "clamp(22px, 4vw, 36px)" }}>
+        Could not reach PokeAPI
+      </h2>
+      <p className="subtitle" style={{ marginTop: 6, color: "#666" }}>
+        {message}
+      </p>
+      <p className="subtitle" style={{ marginTop: 14 }}>
+        Check your internet connection and reload the page.
+      </p>
+      <div style={{ marginTop: 18, display: "flex", justifyContent: "center" }}>
+        <button
+          className="float-btn primary"
+          onClick={() => window.location.reload()}
+        >
+          Reload
+        </button>
+      </div>
+    </section>
   );
 }
