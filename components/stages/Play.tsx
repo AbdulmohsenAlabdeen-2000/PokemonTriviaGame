@@ -580,14 +580,26 @@ function QuestionView({
         </div>
       )}
 
-      <div className="q-image-wrap">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          key={q.id}
-          className={`q-image${q.category === "PokeBalls" ? " pixel" : ""}`}
-          src={q.image} alt="" aria-hidden="true"
-        />
-      </div>
+      {(() => {
+        // Silhouette the icon ("Who's that Pokémon?" style) on categories
+        // where guessing from shape alone is the puzzle. Skip silhouette for:
+        //   - Colors:    color IS the answer, can't silhouette it
+        //   - PokeBalls: every ball would look identical as a silhouette
+        // The silhouette is removed during the reveal phase so players see
+        // the full-color sprite when the answer is shown.
+        const silhouetteable = q.category !== "Colors" && q.category !== "PokeBalls";
+        const silhouette = silhouetteable && phase !== "reveal";
+        const cls =
+          "q-image" +
+          (q.category === "PokeBalls" ? " pixel" : "") +
+          (silhouette ? " silhouette" : "");
+        return (
+          <div className="q-image-wrap">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img key={q.id} className={cls} src={q.image} alt="" aria-hidden="true" />
+          </div>
+        );
+      })()}
 
       <p className="q-prompt">{q.prompt}</p>
 

@@ -569,6 +569,24 @@ input[type="text"], textarea {
   user-select: none;
 }
 .q-image.pixel { image-rendering: pixelated; }
+
+/**
+ * Silhouette mode — the classic "Who's that Pokémon?" puzzle: render the
+ * sprite as a pure-black shape on a transparent background so players can
+ * only guess from shape, not color/markings. Removed during the reveal
+ * phase so the full-color sprite is shown alongside the correct answer.
+ *
+ * Implementation: brightness(0) collapses every non-transparent pixel to
+ * black; saturate(0) also strips any residual color from anti-aliased
+ * edges. drop-shadow gives the silhouette a soft yellow halo so it still
+ * pops on the white card.
+ */
+.q-image.silhouette {
+  filter: brightness(0) saturate(0)
+          drop-shadow(0 8px 0 rgba(0,0,0,0.18))
+          drop-shadow(0 0 12px rgba(255, 215, 0, 0.55));
+  transition: filter 320ms ease;
+}
 @keyframes gentle-bob {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-6px); }
