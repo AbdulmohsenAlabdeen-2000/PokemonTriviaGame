@@ -206,9 +206,5 @@ export function allYtPlayers(): YouTubeMusic[] {
   return Array.from(REGISTRY.values());
 }
 
-// ----- Track IDs (single source of truth) ------------------------------
-
-export const VIDEO_LOBBY   = "l490gxtJMW4";
-export const VIDEO_BATTLE  = "PfDhKzpUieA";
-export const VIDEO_CORRECT = "zhCXcOGhy4c";
-export const VIDEO_WINNER  = "nyINomMu61E";
+// Track ids are now provided by each game's GameConfig.music — the audio
+// manager looks them up at runtime.

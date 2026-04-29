@@ -1,8 +1,15 @@
 "use client";
 
 import { audio } from "@/lib/audio";
+import type { GameConfig } from "@/lib/games/types";
 
-export default function Welcome({ onStart }: { onStart: () => void }) {
+export default function Welcome({
+  game,
+  onStart
+}: {
+  game: GameConfig;
+  onStart: () => void;
+}) {
   const handleStart = async () => {
     // First-click gesture unlocks the AudioContext for the rest of the session
     await audio().resume();
@@ -18,24 +25,15 @@ export default function Welcome({ onStart }: { onStart: () => void }) {
       }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png"
-          alt="Pikachu"
+          src={game.splash}
+          alt={game.splashAlt}
           style={{ width: 120, height: 120, objectFit: "contain", filter: "drop-shadow(0 6px 0 rgba(0,0,0,0.18))" }}
           className="hero-mascot"
         />
-        <h1 className="title">Pokémon<br/>Trivia Arena</h1>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png"
-          alt=""
-          aria-hidden
-          style={{ width: 60, height: 60, objectFit: "contain", imageRendering: "pixelated" }}
-        />
+        <h1 className="title">{game.name}<br/>Trivia Arena</h1>
       </div>
       <p className="subtitle" style={{ maxWidth: 640, margin: "8px auto 24px" }}>
-        Two trainers, six categories, thirty-six questions of escalating difficulty.
-        One champion. Choose your name, pick your starter, and battle through
-        Pokémon, Types, Gyms, Characters, Poké Balls and Colors.
+        {game.description}
       </p>
       <div style={{ display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
         <button className="float-btn primary" onClick={handleStart}>

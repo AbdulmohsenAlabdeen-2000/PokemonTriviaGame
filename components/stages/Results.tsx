@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { audio } from "@/lib/audio";
-import { spriteFor } from "@/lib/pokedex";
 import type { FinalResult } from "@/components/stages/Play";
 
 const CONFETTI_COLORS = [
@@ -103,7 +102,7 @@ export default function Results({
           <div className="results-card" data-side="p1" data-winner={!tie && p1Wins}>
             {!tie && p1Wins && <div className="winner-glow" aria-hidden="true" />}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={spriteFor(result.p1.starterDexId)} alt={result.p1.name} />
+            <img src={result.p1.starterImage} alt={result.p1.starterName} />
             <div className="name">{result.p1.name}</div>
             <div className="score">{result.p1.score.toLocaleString()} pts</div>
             {!tie && p1Wins && (
@@ -114,7 +113,7 @@ export default function Results({
           <div className="results-card" data-side="p2" data-winner={!tie && !p1Wins}>
             {!tie && !p1Wins && <div className="winner-glow" aria-hidden="true" />}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={spriteFor(result.p2.starterDexId)} alt={result.p2.name} />
+            <img src={result.p2.starterImage} alt={result.p2.starterName} />
             <div className="name">{result.p2.name}</div>
             <div className="score">{result.p2.score.toLocaleString()} pts</div>
             {!tie && !p1Wins && (

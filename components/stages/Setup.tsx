@@ -1,22 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { STARTERS, type StarterId, spriteFor } from "@/lib/pokedex";
 import { audio } from "@/lib/audio";
+import type { GameConfig } from "@/lib/games/types";
 
 export type SetupResult = {
-  p1: { name: string; starter: StarterId };
-  p2: { name: string; starter: StarterId };
+  p1: { name: string; starterId: string };
+  p2: { name: string; starterId: string };
 };
 
 type SubPhase = "p1-name" | "p1-poke" | "p2-name" | "p2-poke";
 
-export default function Setup({ onDone }: { onDone: (r: SetupResult) => void }) {
+export default function Setup({
+  game,
+  onDone
+}: {
+  game: GameConfig;
+  onDone: (r: SetupResult) => void;
+}) {
   const [phase, setPhase] = useState<SubPhase>("p1-name");
   const [p1Name, setP1Name] = useState("");
   const [p2Name, setP2Name] = useState("");
-  const [p1Star, setP1Star] = useState<StarterId | null>(null);
-  const [p2Star, setP2Star] = useState<StarterId | null>(null);
+  const [p1Star, setP1Star] = useState<string | null>(null);
+  const [p2Star, setP2Star] = useState<string | null>(null);
 
   useEffect(() => { audio().playWhoosh(); }, [phase]);
 
@@ -33,12 +39,12 @@ export default function Setup({ onDone }: { onDone: (r: SetupResult) => void }) 
         <h1 className="title" style={{ marginBottom: 8 }}>
           <span style={{ color: accent }}>{isP1 ? "Player 1" : "Player 2"}</span>
         </h1>
-        <p className="subtitle" style={{ marginBottom: 20 }}>Enter your trainer name</p>
+        <p className="subtitle" style={{ marginBottom: 20 }}>Enter your name</p>
         <div style={{ display: "flex", justifyContent: "center" }}>
           <input
             autoFocus
             className="trainer-input"
-            placeholder="Enter your trainer name"
+            placeholder="Enter your name"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => {
@@ -81,7 +87,7 @@ export default function Setup({ onDone }: { onDone: (r: SetupResult) => void }) 
     );
   }
 
-  // Pokemon picker
+  // Starter / loadout picker (game-driven)
   const isP1 = phase === "p1-poke";
   const star = isP1 ? p1Star : p2Star;
   const setStar = isP1 ? setP1Star : setP2Star;
@@ -95,8 +101,8 @@ export default function Setup({ onDone }: { onDone: (r: SetupResult) => void }) 
       setPhase("p2-name");
     } else {
       onDone({
-        p1: { name: p1Name.trim(), starter: p1Star! },
-        p2: { name: p2Name.trim(), starter: star }
+        p1: { name: p1Name.trim(), starterId: p1Star! },
+        p2: { name: p2Name.trim(), starterId: star }
       });
     }
   };
@@ -107,9 +113,9 @@ export default function Setup({ onDone }: { onDone: (r: SetupResult) => void }) 
       <h1 className="title" style={{ marginBottom: 8 }}>
         <span style={{ color: accent }}>{name}</span>
       </h1>
-      <p className="subtitle" style={{ marginBottom: 16 }}>Choose your starter Pokémon</p>
+      <p className="subtitle" style={{ marginBottom: 16 }}>{game.starters.title}</p>
       <div className="starter-grid">
-        {STARTERS.map((s) => (
+        {game.starters.items.map((s) => (
           <button
             key={s.id}
             type="button"
@@ -122,9 +128,9 @@ export default function Setup({ onDone }: { onDone: (r: SetupResult) => void }) 
             onMouseEnter={() => audio().playHover()}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={spriteFor(s.dexId)} alt={s.name} />
+            <img src={s.image} alt={s.name} />
             <h3>{s.name}</h3>
-            <span className={`type-badge ${s.typeClass}`}>{s.type}</span>
+            <span className={`type-badge ${s.badgeClass}`}>{s.badge}</span>
             <p style={{ margin: 0, fontSize: 13, color: "#666" }}>{s.blurb}</p>
           </button>
         ))}

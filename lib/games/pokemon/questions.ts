@@ -16,8 +16,8 @@
  * All fetches are parallelised with Promise.all and run once at game start.
  */
 
-import type { Question, Difficulty, Category } from "./questions";
-import { POINTS_FOR } from "./questions";
+import type { Question, Difficulty } from "../types";
+import { POINTS_FOR } from "../types";
 
 const POKE_API = "https://pokeapi.co/api/v2";
 
@@ -205,7 +205,7 @@ async function genName(
   const opts = shuffle([name, ...wrongNames]) as [string, string, string, string];
   return {
     id: `gen-name-${pokemonId}`,
-    category: "Pokemon",
+    categoryId: "pokemon",
     difficulty,
     value: POINTS_FOR[difficulty],
     prompt: "What is the name of this Pokémon?",
@@ -225,7 +225,7 @@ async function genType(
   const opts = shuffle([correctType, ...wrongs]) as [string, string, string, string];
   return {
     id: `gen-type-${pokemonId}`,
-    category: "Types",
+    categoryId: "types",
     difficulty,
     value: POINTS_FOR[difficulty],
     prompt: `What is ${capitalize(p.name)}'s primary type?`,
@@ -269,7 +269,7 @@ async function genEvolution(
   const opts = shuffle([nextName, ...wrongNames.slice(0, 3)]) as [string, string, string, string];
   return {
     id: `gen-evo-${pokemonId}`,
-    category: "Gyms", // we keep the slot but rebrand label in CATEGORIES
+    categoryId: "evolutions", // we keep the slot but rebrand label in CATEGORIES
     difficulty,
     value: POINTS_FOR[difficulty],
     prompt: `What does ${capitalize(myPoke.name)} evolve into?`,
@@ -296,7 +296,7 @@ async function genStat(
   const opts = shuffle([correct, ...wrongs]) as [string, string, string, string];
   return {
     id: `gen-stat-${pokemonId}`,
-    category: "Characters", // slot reused; label rebranded in CATEGORIES
+    categoryId: "pokedex", // slot reused; label rebranded in CATEGORIES
     difficulty,
     value: POINTS_FOR[difficulty],
     prompt: `What is ${capitalize(p.name)}'s National Pokédex number?`,
@@ -317,7 +317,7 @@ async function genBall(
   const opts = shuffle([correct, ...wrongs]) as [string, string, string, string];
   return {
     id: `gen-ball-${ball.slug}`,
-    category: "PokeBalls",
+    categoryId: "balls",
     difficulty,
     value: POINTS_FOR[difficulty],
     prompt: "Which Poké Ball is shown here?",
@@ -340,7 +340,7 @@ async function genColor(
   const opts = shuffle([correct, ...wrongs]) as [string, string, string, string];
   return {
     id: `gen-color-${pokemonId}`,
-    category: "Colors",
+    categoryId: "colors",
     difficulty,
     value: POINTS_FOR[difficulty],
     prompt: `What color is ${capitalize(p.name)} (per the Pokédex)?`,
@@ -428,14 +428,12 @@ export async function buildGameQuestionsFromAPI(): Promise<Question[]> {
     pair(hardIds.slice(0, 6),   "hard",   genColor)
   ]);
 
-  const grouped: Record<Category, Question[]> = {
-    Pokemon:    [...namesE, ...namesM, ...namesH],
-    Types:      [...typesE, ...typesM, ...typesH],
-    Gyms:       [...evosE,  ...evosM,  ...evosH],   // "Evolutions" category
-    Characters: [...statsE, ...statsM, ...statsH],  // "Pokédex" category
-    PokeBalls:  [...ballsE, ...ballsM, ...ballsH],
-    Colors:     [...colsE,  ...colsM,  ...colsH]
-  };
-
-  return Object.values(grouped).flat();
+  return [
+    ...namesE, ...namesM, ...namesH,
+    ...typesE, ...typesM, ...typesH,
+    ...evosE,  ...evosM,  ...evosH,
+    ...statsE, ...statsM, ...statsH,
+    ...ballsE, ...ballsM, ...ballsH,
+    ...colsE,  ...colsM,  ...colsH
+  ];
 }

@@ -11,27 +11,33 @@
  * first click of any "Start" button.
  */
 
-import {
-  allYtPlayers,
-  ytPlayer,
-  VIDEO_LOBBY,
-  VIDEO_BATTLE,
-  VIDEO_CORRECT,
-  VIDEO_WINNER,
-  type YouTubeMusic
-} from "./youtube";
+import { allYtPlayers, ytPlayer, type YouTubeMusic } from "./youtube";
+import type { MusicConfig } from "./games/types";
 
 const CRY_BASE = "https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest";
 
 /**
- * Identifiers for the YT players. The audio manager treats them all as
- * mutually exclusive — starting one pauses every other and silences the
- * synth music gain.
+ * The audio manager doesn't know which game is active — that's set by the
+ * GameApp via setMusicConfig() at game-select time. Each slot (lobby /
+ * battle / correct / winner) maps to a YouTube video id chosen by the
+ * active game. If a slot is null the synth fallback is used instead.
+ *
+ * The four mutually-exclusive YT players are looked up by `${gameId}-${slot}`
+ * so switching games doesn't reuse another game's iframe.
  */
-function ytLobby()   { return ytPlayer("lobby",   VIDEO_LOBBY); }
-function ytBattle()  { return ytPlayer("battle",  VIDEO_BATTLE); }
-function ytCorrect() { return ytPlayer("correct", VIDEO_CORRECT); }
-function ytWinner()  { return ytPlayer("winner",  VIDEO_WINNER); }
+let activeMusic: MusicConfig & { gameId: string } = {
+  gameId: "default",
+  lobby: null,
+  battle: null,
+  correct: null,
+  winner: null
+};
+
+function ytForSlot(slot: "lobby" | "battle" | "correct" | "winner"): YouTubeMusic | null {
+  const id = activeMusic[slot];
+  if (!id) return null;
+  return ytPlayer(`${activeMusic.gameId}-${slot}`, id);
+}
 
 const NOTE: Record<string, number> = {
   C2: 65.41,  E2: 82.41,  G2: 98.0,  A2: 110.0,
@@ -235,19 +241,43 @@ class AudioManager {
 
   /** Lobby music — YT track, used between questions and on lobby/setup */
   async playLobby() {
-    return this.switchToYt(ytLobby(), "lobby");
+    const yt = ytForSlot("lobby");
+    if (yt) return this.switchToYt(yt, "lobby");
+    return this.startMusic("lobby");
   }
   /** Battle music — YT track, used while a question is active */
   async playBattle() {
-    return this.switchToYt(ytBattle(), "battle");
+    const yt = ytForSlot("battle");
+    if (yt) return this.switchToYt(yt, "battle");
+    return this.startMusic("battle");
   }
   /** Plays the correct-answer YT track during the reveal phase */
   async playCorrectMusic() {
-    return this.switchToYt(ytCorrect(), null);
+    const yt = ytForSlot("correct");
+    if (yt) return this.switchToYt(yt, null);
+    // No synth fallback for correct — the cry + defeat synth handle it.
   }
   /** Plays the winner YT track on the results stage */
   async playWinnerMusic() {
-    return this.switchToYt(ytWinner(), null);
+    const yt = ytForSlot("winner");
+    if (yt) return this.switchToYt(yt, null);
+  }
+
+  /**
+   * Configure which YouTube videos are used for each music slot. Called
+   * from GameApp when a game is chosen — and again to switch games
+   * without leaking iframes from the previous one.
+   */
+  setMusicConfig(gameId: string, music: MusicConfig) {
+    // If the same game is already active, keep going
+    if (activeMusic.gameId === gameId) {
+      activeMusic = { gameId, ...music };
+      return;
+    }
+    // Different game — pause every YT player so the previous game's
+    // iframe doesn't keep streaming in the background.
+    allYtPlayers().forEach((p) => p.pause());
+    activeMusic = { gameId, ...music };
   }
 
   /**

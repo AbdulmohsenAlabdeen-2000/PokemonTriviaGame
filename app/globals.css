@@ -45,6 +45,8 @@ html, body {
     radial-gradient(circle at 85% 15%, #cde7ff 0%, transparent 45%),
     radial-gradient(circle at 50% 95%, #ffd0d0 0%, transparent 50%),
     linear-gradient(180deg, #fff8e1 0%, #fde6f0 100%);
+  background-attachment: fixed;
+  transition: background 600ms ease;
   -webkit-font-smoothing: antialiased;
   /* Make sure iOS handles taps without delay or weird zoom behavior. */
   -webkit-text-size-adjust: 100%;
@@ -1374,4 +1376,172 @@ input[type="text"], textarea {
 @media (min-width: 1280px) {
   .card { max-width: 1200px; }
   .title { font-size: clamp(36px, 5vw, 64px); }
+}
+
+/* ==========================================================
+   PER-GAME THEME OVERRIDES (set via <body data-game="..."> )
+   ========================================================== */
+
+/* Minecraft — earthy greens, gold accents */
+body[data-game="minecraft"] {
+  background:
+    radial-gradient(circle at 20% 10%, #d4f0b3 0%, transparent 45%),
+    radial-gradient(circle at 80% 20%, #a8d4ff 0%, transparent 40%),
+    linear-gradient(180deg, #c0e2a5 0%, #8ec06c 60%, #6f9356 100%);
+  background-attachment: fixed;
+}
+body[data-game="minecraft"] {
+  --color-poke-red:        #5b8a3a;
+  --color-poke-red-dark:   #3e6028;
+  --color-poke-blue:       #3a6ec1;
+  --color-poke-blue-dark:  #1f4480;
+  --color-poke-yellow:     #ffd35a;
+  --color-poke-yellow-dark:#bd9a35;
+  --color-board-bg:        #d4f0b3;
+  --color-board-deep:      #6f9356;
+  --color-board-deeper:    #3e6028;
+  --color-team-bg:         #e8f5d6;
+}
+
+/* ARC Raiders — moody slate + amber + cyan */
+body[data-game="arc-raiders"] {
+  background:
+    radial-gradient(circle at 20% 10%, #2a3950 0%, transparent 45%),
+    radial-gradient(circle at 80% 80%, #3d2c1c 0%, transparent 50%),
+    linear-gradient(180deg, #1c2330 0%, #2d3848 50%, #4a5566 100%);
+  background-attachment: fixed;
+  color: #e8e4d8;
+}
+body[data-game="arc-raiders"] {
+  --color-poke-red:        #d4a14a;
+  --color-poke-red-dark:   #9c7028;
+  --color-poke-blue:       #7ec3ff;
+  --color-poke-blue-dark:  #4a8fc8;
+  --color-poke-yellow:     #f0c873;
+  --color-poke-yellow-dark:#a5853e;
+  --color-poke-ink:        #0f1620;
+  --color-board-bg:        #2d3848;
+  --color-board-deep:      #4a5566;
+  --color-board-deeper:    #1c2330;
+  --color-team-bg:         #2a3344;
+}
+body[data-game="arc-raiders"] .card {
+  background: #f4ecd8;
+  color: #1f2937;
+}
+
+/* ==========================================================
+   GAME-SELECT GRID (3 game cards on the welcome screen)
+   ========================================================== */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(14px, 2.5vw, 22px);
+  margin: 8px 0 16px;
+}
+@media (max-width: 720px) {
+  .game-grid { grid-template-columns: 1fr; }
+}
+
+.game-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 18px 18px;
+  border: 4px solid var(--color-poke-ink);
+  border-radius: 22px;
+  background: white;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 8px 0 var(--color-poke-ink);
+  transition:
+    transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 220ms ease,
+    background 280ms ease;
+  border-top: 14px solid var(--game-primary, var(--color-poke-red));
+  animation: gentle-float 4s ease-in-out infinite;
+  min-height: 320px;
+}
+.game-card:nth-child(2) { animation-delay: -1.3s; }
+.game-card:nth-child(3) { animation-delay: -2.6s; }
+
+.game-card[data-playable="true"]:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 14px 0 var(--color-poke-ink), 0 0 0 6px var(--game-accent, var(--color-poke-yellow));
+  background: linear-gradient(180deg, #fff 0%, color-mix(in srgb, var(--game-accent, #fff5b8) 24%, #fff) 100%);
+}
+.game-card[data-playable="false"] {
+  cursor: not-allowed;
+  opacity: 0.7;
+  filter: saturate(0.6);
+  animation: none;
+}
+
+.coming-soon-pill {
+  position: absolute;
+  top: -14px;
+  right: 14px;
+  padding: 4px 12px;
+  background: var(--color-poke-yellow);
+  color: var(--color-poke-ink);
+  border: 3px solid var(--color-poke-ink);
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  box-shadow: 0 3px 0 var(--color-poke-ink);
+  transform: rotate(8deg);
+}
+
+.game-card-art {
+  width: 100%;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 6px 0 rgba(0,0,0,0.18));
+}
+.game-card-art img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.game-card-name {
+  margin: 4px 0 0;
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 900;
+  color: var(--game-primary, var(--color-poke-blue));
+  text-shadow: 1.5px 1.5px 0 var(--color-poke-yellow), 3px 3px 0 var(--color-poke-ink);
+  letter-spacing: 0.5px;
+}
+.game-card-tagline {
+  margin: 0;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.4;
+  flex: 1;
+}
+.game-card-cta {
+  display: inline-block;
+  padding: 6px 16px;
+  border: 3px solid var(--color-poke-ink);
+  border-radius: 999px;
+  background: var(--game-accent, var(--color-poke-yellow));
+  color: var(--color-poke-ink);
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 0 var(--color-poke-ink);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.game-card[data-playable="true"]:hover .game-card-cta {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--color-poke-ink);
 }

@@ -3,15 +3,16 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import AnswerButton from "@/components/AnswerButton";
 import { audio } from "@/lib/audio";
-import {
-  CATEGORIES,
-  HARD_WRONG_PENALTY,
-  categoryMeta,
-  type Question
-} from "@/lib/questions";
-import { buildGameQuestionsFromAPI } from "@/lib/trivia-generator";
-import { spriteFor, starterById } from "@/lib/pokedex";
+import { HARD_WRONG_PENALTY, type Question } from "@/lib/games/types";
+import type { GameConfig, CategoryConfig, StarterConfig } from "@/lib/games/types";
 import type { SetupResult } from "@/components/stages/Setup";
+
+function findStarter(game: GameConfig, id: string): StarterConfig | undefined {
+  return game.starters.items.find((s) => s.id === id);
+}
+function categoryMeta(game: GameConfig, id: string): CategoryConfig | undefined {
+  return game.categories.find((c) => c.id === id);
+}
 
 const PICKER_TIME = 60;     // seconds for picker to answer
 const CHALLENGER_TIME = 15; // seconds for challenger to answer
@@ -29,8 +30,8 @@ const TILE_BALL_FOR_DIFFICULTY: Record<"easy" | "medium" | "hard", string> = {
 };
 
 export type FinalResult = {
-  p1: { name: string; starterDexId: number; score: number };
-  p2: { name: string; starterDexId: number; score: number };
+  p1: { name: string; starterImage: string; starterName: string; score: number };
+  p2: { name: string; starterImage: string; starterName: string; score: number };
 };
 
 type Phase = "loading" | "load-error" | "board" | "picker" | "challenger" | "reveal" | "done";
@@ -203,9 +204,11 @@ function reducer(state: State, action: Action): State {
 }
 
 export default function Play({
+  game,
   setup,
   onDone
 }: {
+  game: GameConfig;
   setup: SetupResult;
   onDone: (r: FinalResult) => void;
 }) {
@@ -229,7 +232,7 @@ export default function Play({
   // Fetch questions from PokeAPI on mount.
   useEffect(() => {
     let cancelled = false;
-    buildGameQuestionsFromAPI()
+    game.buildQuestions()
       .then((questions) => {
         if (cancelled) return;
         dispatch({ type: "QUESTIONS_LOADED", questions });
@@ -241,8 +244,9 @@ export default function Play({
     return () => { cancelled = true; };
   }, []);
 
-  const p1Star = starterById(setup.p1.starter);
-  const p2Star = starterById(setup.p2.starter);
+  const p1Star = findStarter(game, setup.p1.starterId);
+  const p2Star = findStarter(game, setup.p2.starterId);
+  if (!p1Star || !p2Star) return null;
 
   // ---------- Music switching: only ONE track at a time ----------
   useEffect(() => { audio().preload([25, 202]); }, []);
@@ -298,12 +302,12 @@ export default function Play({
     audio().stopMusic();
     const t = window.setTimeout(() => {
       onDone({
-        p1: { name: setup.p1.name, starterDexId: p1Star.dexId, score: state.scores[0] },
-        p2: { name: setup.p2.name, starterDexId: p2Star.dexId, score: state.scores[1] }
+        p1: { name: setup.p1.name, starterImage: p1Star.image, starterName: p1Star.name, score: state.scores[0] },
+        p2: { name: setup.p2.name, starterImage: p2Star.image, starterName: p2Star.name, score: state.scores[1] }
       });
     }, 600);
     return () => window.clearTimeout(t);
-  }, [state.phase, state.scores, onDone, setup.p1.name, setup.p2.name, p1Star.dexId, p2Star.dexId]);
+  }, [state.phase, state.scores, onDone, setup.p1.name, setup.p2.name, p1Star.image, p2Star.image, p1Star.name, p2Star.name]);
 
   // ---------- Score-bump flag ----------
   const [bumpedSide, setBumpedSide] = useState<0 | 1 | null>(null);
@@ -339,6 +343,7 @@ export default function Play({
           <Board
             used={state.used}
             questions={state.questions}
+            categories={game.categories}
             pickerName={state.pickerIdx === 0 ? setup.p1.name : setup.p2.name}
             pickerColor={state.pickerIdx === 0 ? "var(--color-poke-red)" : "var(--color-poke-blue)"}
             done={state.phase === "done"}
@@ -349,6 +354,7 @@ export default function Play({
           state.current && (
             <QuestionView
               q={state.current}
+              game={game}
               phase={state.phase}
               timeLeft={state.timeLeft}
               revealDurationMs={
@@ -377,10 +383,10 @@ export default function Play({
         <TeamPanel
           side="p1"
           name={setup.p1.name}
-          starterDex={p1Star.dexId}
+          starterImage={p1Star.image}
           starterName={p1Star.name}
-          starterType={p1Star.type}
-          starterTypeClass={p1Star.typeClass}
+          starterBadge={p1Star.badge}
+          starterBadgeClass={p1Star.badgeClass}
           score={state.scores[0]}
           isPicker={state.pickerIdx === 0 && (state.phase === "board" || state.phase === "picker" || state.phase === "challenger")}
           isAnswering={
@@ -392,10 +398,10 @@ export default function Play({
         <TeamPanel
           side="p2"
           name={setup.p2.name}
-          starterDex={p2Star.dexId}
+          starterImage={p2Star.image}
           starterName={p2Star.name}
-          starterType={p2Star.type}
-          starterTypeClass={p2Star.typeClass}
+          starterBadge={p2Star.badge}
+          starterBadgeClass={p2Star.badgeClass}
           score={state.scores[1]}
           isPicker={state.pickerIdx === 1 && (state.phase === "board" || state.phase === "picker" || state.phase === "challenger")}
           isAnswering={
@@ -421,6 +427,7 @@ export default function Play({
 function Board({
   used,
   questions,
+  categories,
   pickerName,
   pickerColor,
   done,
@@ -428,6 +435,7 @@ function Board({
 }: {
   used: Set<string>;
   questions: Question[];
+  categories: CategoryConfig[];
   pickerName: string;
   pickerColor: string;
   done: boolean;
@@ -445,9 +453,9 @@ function Board({
         )}
       </div>
       <div className="board" role="grid" aria-label="Trivia board">
-        {CATEGORIES.map((cat) => {
+        {categories.map((cat) => {
           const cells = questions
-            .filter((q) => q.category === cat.id)
+            .filter((q) => q.categoryId === cat.id)
             .sort((a, b) => a.value - b.value);
           return (
             <div key={cat.id} className="board-col">
@@ -456,7 +464,7 @@ function Board({
                 <img
                   src={cat.icon}
                   alt={cat.iconAlt}
-                  className={`board-col-icon${cat.id === "PokeBalls" ? " pixel" : ""}`}
+                  className={`board-col-icon${cat.iconStyle === "pixel" ? " pixel" : ""}`}
                 />
                 <div className="board-col-label">{cat.label}</div>
               </div>
@@ -506,13 +514,14 @@ function Board({
 type Trainer = { name: string; side: "p1" | "p2"; color: string };
 
 function QuestionView({
-  q, phase, timeLeft, revealDurationMs,
+  q, game, phase, timeLeft, revealDurationMs,
   picker, challenger,
   pickerPick, challengerPick,
   pickerCorrect, challengerCorrect,
   onPickerAnswer, onChallengerAnswer
 }: {
   q: Question;
+  game: GameConfig;
   phase: "picker" | "challenger" | "reveal";
   timeLeft: number;
   revealDurationMs: number;
@@ -525,7 +534,8 @@ function QuestionView({
   onPickerAnswer: (o: 0 | 1 | 2 | 3) => void;
   onChallengerAnswer: (o: 0 | 1 | 2 | 3) => void;
 }) {
-  const meta = categoryMeta(q.category);
+  const meta = categoryMeta(game, q.categoryId);
+  if (!meta) return null;
   const totalForPhase = phase === "picker" ? PICKER_TIME : phase === "challenger" ? CHALLENGER_TIME : 1;
   const dangerThreshold = phase === "picker" ? 10 : phase === "challenger" ? 5 : 0;
   const warnThreshold   = phase === "picker" ? 30 : phase === "challenger" ? 10 : 0;
@@ -545,7 +555,7 @@ function QuestionView({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={meta.icon} alt="" aria-hidden="true"
-            className={`q-pill-icon${meta.id === "PokeBalls" ? " pixel" : ""}`}
+            className={`q-pill-icon${meta.iconStyle === "pixel" ? " pixel" : ""}`}
           />
           {meta.label}
         </span>
@@ -581,18 +591,18 @@ function QuestionView({
       )}
 
       {(() => {
-        // Silhouette the icon ("Who's that Pokémon?" style) on every
-        // Pokémon-based category — including Colors, since recognising the
-        // silhouette is what tells you the Pokédex colour. The only skip
-        // is Poké Balls, because every ball would silhouette to the same
-        // round shape and become unguessable.
-        // The silhouette is removed during the reveal phase so players
-        // see the full-color sprite when the answer is shown.
-        const silhouetteable = q.category !== "PokeBalls";
-        const silhouette = silhouetteable && phase !== "reveal";
+        // Silhouette the icon ("Who's that Pokémon?" style) for harder
+        // puzzles. A question can opt out via preventSilhouette (the answer
+        // depends on the colour) or force it via forceSilhouette (e.g.
+        // ball-colour questions where we want to hide the ball's colours).
+        // Always removed during reveal so players see the full-colour image.
+        const silhouette =
+          phase !== "reveal" &&
+          !q.preventSilhouette &&
+          (q.forceSilhouette || meta.iconStyle !== "pixel");
         const cls =
           "q-image" +
-          (q.category === "PokeBalls" ? " pixel" : "") +
+          (meta.iconStyle === "pixel" ? " pixel" : "") +
           (silhouette ? " silhouette" : "");
         return (
           <div className="q-image-wrap">
@@ -690,15 +700,15 @@ function QuestionView({
 }
 
 function TeamPanel({
-  side, name, starterDex, starterName, starterType, starterTypeClass,
+  side, name, starterImage, starterName, starterBadge, starterBadgeClass,
   score, isPicker, isAnswering, bump
 }: {
   side: "p1" | "p2";
   name: string;
-  starterDex: number;
+  starterImage: string;
   starterName: string;
-  starterType: string;
-  starterTypeClass: string;
+  starterBadge: string;
+  starterBadgeClass: string;
   score: number;
   isPicker: boolean;
   isAnswering: boolean;
@@ -718,14 +728,14 @@ function TeamPanel({
       </div>
       <div className="team-panel-body">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="team-avatar" src={spriteFor(starterDex)} alt={starterName} />
+        <img className="team-avatar" src={starterImage} alt={starterName} />
         <div className="team-meta">
           <div className="team-name">{name}</div>
           <div className={`team-score ${bump ? "bump" : ""}`}>
             {score.toLocaleString()}
           </div>
           <div className="team-poke">
-            <span className={`type-badge ${starterTypeClass}`}>{starterType}</span>
+            <span className={`type-badge ${starterBadgeClass}`}>{starterBadge}</span>
             <span className="team-poke-name">{starterName}</span>
           </div>
         </div>
