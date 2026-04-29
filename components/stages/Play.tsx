@@ -603,10 +603,18 @@ function QuestionView({
           "q-image" +
           (meta.iconStyle === "pixel" ? " pixel" : "") +
           (silhouette ? " silhouette" : "");
+        // Fallback: if a remote image (Steam CDN, MetaForge, etc.) fails to
+        // load, swap to a transparent 1x1 and tag the wrapper as broken so
+        // the player sees a clean placeholder instead of a broken-image icon.
+        const onImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+          const img = e.currentTarget;
+          img.style.display = "none";
+          img.parentElement?.setAttribute("data-broken", "true");
+        };
         return (
           <div className="q-image-wrap">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img key={q.id} className={cls} src={q.image} alt="" aria-hidden="true" />
+            <img key={q.id} className={cls} src={q.image} alt="" aria-hidden="true" onError={onImgError} />
           </div>
         );
       })()}

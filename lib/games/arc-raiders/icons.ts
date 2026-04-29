@@ -13,6 +13,9 @@ const SUPABASE = (slug: string) =>
 export const ICON_AR_ITEMS   = META("bandage");                   // healing item — instantly readable
 export const ICON_AR_RARITY  = META("advanced-arc-powercell");    // legendary-tier ARC tech
 export const ICON_AR_TYPE    = META("complex-gun-parts");         // refined material crate
-export const ICON_AR_ARCS    = SUPABASE("bastion");               // iconic heavy ARC enemy
+// Use the high-res /images/ render of Bastion (3D enemy art), not the small
+// /icons/ line-art version — the user reported the icons look "drawn".
+export const ICON_AR_ARCS    =
+  "https://unhbvkszwhczbjxgetgk.supabase.co/storage/v1/object/public/images/arc-raiders/images/bastion.webp";
 export const ICON_AR_TRADERS = META("blue-light-stick");          // trader-stocked utility item
 export const ICON_AR_VALUE   = META("acoustic-guitar");           // legendary 7,000-credit trinket

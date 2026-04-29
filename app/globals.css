@@ -623,6 +623,22 @@ body[data-cursor="cs2"] .pb-cursor         { width: 36px; height: 36px; }
   margin: 12px 0;
   min-height: 200px;
 }
+/* If the remote image fails to load, the onError handler hides the <img>
+   and tags the wrapper. We replace the empty space with a generic
+   placeholder so the player still sees something centered. */
+.q-image-wrap[data-broken="true"]::after {
+  content: "?";
+  display: flex; align-items: center; justify-content: center;
+  width: clamp(140px, 28vw, 200px);
+  height: clamp(140px, 28vw, 200px);
+  border: 4px dashed var(--color-poke-ink);
+  border-radius: 22px;
+  background: rgba(255,255,255,0.5);
+  font-size: clamp(56px, 12vw, 96px);
+  font-weight: 900;
+  color: var(--color-poke-ink);
+  opacity: 0.4;
+}
 .q-image {
   width: clamp(160px, 32vw, 240px);
   height: clamp(160px, 32vw, 240px);

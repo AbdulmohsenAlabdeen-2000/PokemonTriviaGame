@@ -6,8 +6,9 @@ import { CS_BUTTERFLY_EMERALD } from "@/lib/games/cs2/icons";
 // Real game-asset cursor sources. Each is hot-link friendly and small enough
 // to read at 32-36px after CSS scaling.
 const MC_DIAMOND_SWORD = "https://minecraft.wiki/Special:FilePath/Diamond_Sword.png";
+// High-res 3D render rather than the small UI icon
 const ARC_SENTINEL =
-  "https://unhbvkszwhczbjxgetgk.supabase.co/storage/v1/object/public/images/arc-raiders/icons/sentinel.webp";
+  "https://unhbvkszwhczbjxgetgk.supabase.co/storage/v1/object/public/images/arc-raiders/images/sentinel.webp";
 
 /**
  * Game-aware floating cursor that follows the mouse and plays a "capture"

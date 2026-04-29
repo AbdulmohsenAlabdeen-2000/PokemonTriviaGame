@@ -157,7 +157,10 @@ function genArc(arc: AArc, difficulty: Difficulty, allArcs: AArc[]): Question {
     prompt: "Which ARC enemy is this?",
     options: opts,
     answerIndex: opts.indexOf(arc.name) as 0 | 1 | 2 | 3,
-    image: arc.icon,
+    // Prefer the high-res /images/ render over the small /icons/ line-art —
+    // the user wants the "real" 3D-rendered enemy, not the UI icon. Falls
+    // back to icon if image is missing.
+    image: arc.image || arc.icon,
     // Show the real ARC art — silhouette would hide the very thing the
     // player needs to identify the enemy by.
     preventSilhouette: true
