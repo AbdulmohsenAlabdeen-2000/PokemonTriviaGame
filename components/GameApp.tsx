@@ -22,15 +22,19 @@ export default function GameApp() {
   const [setupResult, setSetupResult] = useState<SetupResult | null>(null);
   const [finalResult, setFinalResult] = useState<FinalResult | null>(null);
 
-  // Apply the game's theme + music whenever the active game changes.
+  // Apply the game's theme, music, and cursor variant whenever the active
+  // game changes. The cursor SVG itself is rendered by PokeballCursor —
+  // body[data-cursor] just tells the CSS which inner shape to show.
   useEffect(() => {
     if (typeof document === "undefined") return;
     if (game) {
       document.body.dataset.game = game.theme.bodyAttr;
+      document.body.dataset.cursor = game.theme.bodyAttr;
       audio().setMusicConfig(game.id, game.music);
       try { sessionStorage.setItem(STORAGE_KEY, game.id); } catch { /* ignore */ }
     } else {
       delete document.body.dataset.game;
+      delete document.body.dataset.cursor;
     }
   }, [game]);
 

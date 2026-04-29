@@ -154,6 +154,46 @@ input[type="text"], textarea {
 .pb-cursor.click .pb-shake  { animation: pb-shake 380ms ease; }
 .pb-cursor.click .pb-spark  { animation: pb-spark 380ms ease forwards; }
 
+/* ---------- Per-game cursor variants ----------------------------------- */
+/* Wrapper containing all cursor variants — only one is ever visible. */
+.pb-cursor .pb-default,
+.pb-cursor .pb-mc-sword,
+.pb-cursor .pb-arc-reticle {
+  position: absolute; inset: 0;
+}
+.pb-cursor .pb-mc-sword,
+.pb-cursor .pb-arc-reticle { display: none; }
+
+/* Default = Pokémon (no body[data-cursor], or pokemon set explicitly). */
+body[data-cursor="minecraft"] .pb-cursor .pb-default,
+body[data-cursor="arc-raiders"] .pb-cursor .pb-default { display: none; }
+
+body[data-cursor="minecraft"] .pb-cursor .pb-mc-sword     { display: block; }
+body[data-cursor="arc-raiders"] .pb-cursor .pb-arc-reticle { display: block; }
+
+/* Slightly bigger cursor footprint on Minecraft/ARC variants so the
+   sword tip and reticle ring read clearly. */
+body[data-cursor="minecraft"] .pb-cursor,
+body[data-cursor="arc-raiders"] .pb-cursor { width: 32px; height: 32px; }
+
+/* Click animations for the new cursors — "swing" the sword, "lock-on"
+   pulse the reticle. The shake animation already runs, so these are
+   in addition to it. */
+.pb-cursor.click .pb-mc-sword    { animation: mc-sword-swing 380ms ease; transform-origin: 6px 26px; }
+.pb-cursor.click .pb-arc-reticle { animation: arc-reticle-pulse 380ms ease; transform-origin: 50% 50%; }
+
+@keyframes mc-sword-swing {
+  0%   { transform: rotate(0); }
+  40%  { transform: rotate(-30deg); }
+  70%  { transform: rotate(20deg); }
+  100% { transform: rotate(0); }
+}
+@keyframes arc-reticle-pulse {
+  0%, 100% { transform: scale(1);    filter: brightness(1); }
+  40%      { transform: scale(0.78); filter: brightness(1.35); }
+  70%      { transform: scale(1.12); filter: brightness(1.2); }
+}
+
 @keyframes pb-open-top {
   0% { transform: rotate(0); }
   40%, 70% { transform: rotate(-55deg); }
