@@ -76,7 +76,14 @@
       "Bash(/usr/bin/curl -s -L -m 5 -o /dev/null -w \"creeper_head:     %{http_code}\\\\n\" \"https://mcasset.cloud/1.21.4/assets/minecraft/textures/entity/creeper/creeper.png\")",
       "Bash(/usr/bin/curl -s -L -m 5 -I \"https://mcasset.cloud/1.21.4/assets/minecraft/textures/block/grass_block_side.png\")",
       "Bash(/usr/bin/curl -s -L -m 5 -I \"https://cdn.metaforge.app/arc-raiders/icons/acoustic-guitar.webp\")",
-      "Bash(/usr/bin/head -3)"
+      "Bash(/usr/bin/head -3)",
+      "Bash(/usr/bin/python3 -c ' *)",
+      "WebSearch",
+      "WebFetch(domain:en.wikipedia.org)",
+      "Bash(/usr/bin/curl -s -L -m 8 -I \"https://upload.wikimedia.org/wikipedia/en/thumb/7/73/Arc_Raiders_cover_art.jpg/250px-Arc_Raiders_cover_art.jpg\")",
+      "Bash(/usr/bin/curl -s -L -m 8 -o /dev/null -w \"300px → %{content_type} %{http_code}\\\\n\" \"https://upload.wikimedia.org/wikipedia/en/thumb/7/73/Arc_Raiders_cover_art.jpg/300px-Arc_Raiders_cover_art.jpg\")",
+      "Bash(/usr/bin/curl -s -L -m 8 -o /dev/null -w \"400px → %{content_type} %{http_code}\\\\n\" \"https://upload.wikimedia.org/wikipedia/en/thumb/7/73/Arc_Raiders_cover_art.jpg/400px-Arc_Raiders_cover_art.jpg\")",
+      "Bash(/usr/bin/curl -s -L -m 8 -o /dev/null -w \"Special:FilePath → %{content_type} %{http_code}\\\\n\" \"https://en.wikipedia.org/wiki/Special:FilePath/Arc_Raiders_cover_art.jpg\")"
     ]
   }
 }

@@ -13,36 +13,11 @@
 
 import type { GameConfig } from "./types";
 import { pokemonGame } from "./pokemon";
+import { minecraftGame } from "./minecraft";
 
 export type GameEntry = {
   config: GameConfig;
   playable: boolean;
-};
-
-const minecraftPlaceholder: GameConfig = {
-  id: "minecraft",
-  name: "Minecraft",
-  tagline: "Coming next — blocky trivia from PrismarineJS data",
-  description:
-    "Test your overworld instincts: name the mob, the biome, the block, the tool. " +
-    "Live data sourced from the PrismarineJS minecraft-data project.",
-  // Real isometric Grass Block sprite served by minecraft.wiki's Special:FilePath
-  // (returns image/png with hotlink-friendly headers).
-  splash: "https://minecraft.wiki/Special:FilePath/Grass_Block_JE7_BE6.png",
-  splashAlt: "Minecraft grass block",
-  theme: {
-    bodyAttr: "minecraft",
-    primary:    "#5b8a3a",
-    primaryDark:"#3e6028",
-    accent:     "#ffd35a",
-    accentDark: "#bd9a35",
-    blue:       "#3a6ec1",
-    bgGradient: "linear-gradient(180deg, #c0e2a5 0%, #8ec06c 60%, #6f9356 100%)"
-  },
-  music: { lobby: null, battle: null, correct: null, winner: null },
-  categories: [],
-  starters: { title: "", items: [] },
-  buildQuestions: async () => []
 };
 
 const arcRaidersPlaceholder: GameConfig = {
@@ -72,8 +47,8 @@ const arcRaidersPlaceholder: GameConfig = {
 };
 
 export const GAMES: GameEntry[] = [
-  { config: pokemonGame,           playable: true },
-  { config: minecraftPlaceholder,  playable: false },
+  { config: pokemonGame,           playable: true  },
+  { config: minecraftGame,         playable: true  },
   { config: arcRaidersPlaceholder, playable: false }
 ];
 
