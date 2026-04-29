@@ -87,6 +87,20 @@ export type MusicConfig = {
   winner:  string | null;
 };
 
+/**
+ * The small icon shown next to the point value on each board tile.
+ * Lets each game brand its own tiles (Pokémon uses Poké/Great/Ultra
+ * balls, Minecraft uses Wood/Iron/Diamond pickaxes, ARC Raiders uses
+ * common/rare/legendary item rarity gems, etc.).
+ */
+export type TileIcons = {
+  easy: string;
+  medium: string;
+  hard: string;
+  /** "pixel" applies image-rendering: pixelated for low-res sprites. */
+  iconStyle?: "pixel" | "smooth";
+};
+
 /** Top-level game config. */
 export type GameConfig = {
   id: string;
@@ -101,6 +115,8 @@ export type GameConfig = {
   theme: ThemeConfig;
   music: MusicConfig;
   categories: CategoryConfig[];
+  /** Icons shown next to point values on the board, one per difficulty. */
+  tileIcons: TileIcons;
   starters: {
     title: string;        // e.g. "Choose your starter Pokémon"
     items: StarterConfig[];

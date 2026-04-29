@@ -49,6 +49,13 @@ export const arcRaidersGame: GameConfig = {
     { id: "value",   label: "Value",   icon: ICON_AR_VALUE,   iconAlt: "Coin stack" }
   ],
 
+  tileIcons: {
+    // Common / rare / legendary item icons via the MetaForge CDN
+    easy:   CDN("bandage"),
+    medium: CDN("complex-gun-parts"),
+    hard:   CDN("advanced-arc-powercell")
+  },
+
   starters: {
     title: "Choose your starting loadout item",
     items: [

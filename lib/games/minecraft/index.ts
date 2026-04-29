@@ -50,6 +50,12 @@ export const minecraftGame: GameConfig = {
     { id: "crafting", label: "Crafting", icon: ICON_MC_CRAFTING, iconAlt: "Crafting grid" }
   ],
 
+  tileIcons: {
+    easy:   WIKI("Wooden_Pickaxe.png"),
+    medium: WIKI("Iron_Pickaxe.png"),
+    hard:   WIKI("Diamond_Pickaxe.png")
+  },
+
   starters: {
     title: "Choose your starting tool",
     items: [

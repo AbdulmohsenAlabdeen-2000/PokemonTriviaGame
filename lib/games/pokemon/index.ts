@@ -57,6 +57,13 @@ export const pokemonGame: GameConfig = {
     { id: "colors",     label: "Colors",     icon: ICON_COLORS,       iconAlt: "Painter's palette" }
   ],
 
+  tileIcons: {
+    easy:   ITEM("poke-ball"),
+    medium: ITEM("great-ball"),
+    hard:   ITEM("ultra-ball"),
+    iconStyle: "pixel"
+  },
+
   starters: {
     title: "Choose your starter Pokémon",
     items: STARTERS.map((s) => ({

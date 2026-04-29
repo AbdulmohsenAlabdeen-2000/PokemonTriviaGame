@@ -23,11 +23,7 @@ const CHALLENGER_TIME = 15; // seconds for challenger to answer
 const REVEAL_PAUSE_CORRECT_MS = 7000;
 const REVEAL_PAUSE_WRONG_MS   = 3000;
 
-const TILE_BALL_FOR_DIFFICULTY: Record<"easy" | "medium" | "hard", string> = {
-  easy:   "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png",
-  medium: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/great-ball.png",
-  hard:   "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png"
-};
+// Tile difficulty icons now come from each game's GameConfig.tileIcons.
 
 export type FinalResult = {
   p1: { name: string; starterImage: string; starterName: string; score: number };
@@ -344,6 +340,7 @@ export default function Play({
             used={state.used}
             questions={state.questions}
             categories={game.categories}
+            tileIcons={game.tileIcons}
             pickerName={state.pickerIdx === 0 ? setup.p1.name : setup.p2.name}
             pickerColor={state.pickerIdx === 0 ? "var(--color-poke-red)" : "var(--color-poke-blue)"}
             done={state.phase === "done"}
@@ -428,6 +425,7 @@ function Board({
   used,
   questions,
   categories,
+  tileIcons,
   pickerName,
   pickerColor,
   done,
@@ -436,6 +434,7 @@ function Board({
   used: Set<string>;
   questions: Question[];
   categories: CategoryConfig[];
+  tileIcons: GameConfig["tileIcons"];
   pickerName: string;
   pickerColor: string;
   done: boolean;
@@ -491,8 +490,8 @@ function Board({
                         <>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            className="tile-ball"
-                            src={TILE_BALL_FOR_DIFFICULTY[q.difficulty]}
+                            className={`tile-ball${tileIcons.iconStyle === "pixel" ? " pixel" : ""}`}
+                            src={tileIcons[q.difficulty]}
                             alt=""
                             aria-hidden="true"
                           />
