@@ -37,8 +37,16 @@ export const arcRaidersGame: GameConfig = {
     bgGradient: "linear-gradient(180deg, #1c2330 0%, #2d3848 50%, #4a5566 100%)"
   },
 
-  // No YouTube tracks supplied yet — synth fallback
-  music: { lobby: null, battle: null, correct: null, winner: null },
+  // Shares the Pokémon music kit (lobby / battle / correct / winner) so
+  // every game has the same audio loop. Audio manager keys YT iframes by
+  // gameId, so swapping games still pauses the previous game's player
+  // before starting this one.
+  music: {
+    lobby:   "l490gxtJMW4",
+    battle:  "PfDhKzpUieA",
+    correct: "zhCXcOGhy4c",
+    winner:  "nyINomMu61E"
+  },
 
   categories: [
     { id: "items",   label: "Items",   icon: ICON_AR_ITEMS,   iconAlt: "Backpack" },

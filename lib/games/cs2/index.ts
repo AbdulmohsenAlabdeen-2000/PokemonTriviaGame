@@ -35,8 +35,14 @@ export const cs2Game: GameConfig = {
     bgGradient: "linear-gradient(180deg, #1a1f29 0%, #2c3e50 50%, #3a4a5e 100%)"
   },
 
-  // No YouTube tracks supplied — synth fallback
-  music: { lobby: null, battle: null, correct: null, winner: null },
+  // Shares the Pokémon music kit across all games. Audio manager keys YT
+  // iframes by gameId so each game gets its own player instance.
+  music: {
+    lobby:   "l490gxtJMW4",
+    battle:  "PfDhKzpUieA",
+    correct: "zhCXcOGhy4c",
+    winner:  "nyINomMu61E"
+  },
 
   categories: [
     { id: "weapons",  label: "Weapons",  icon: ICON_CS_WEAPONS,  iconAlt: "AK-47 silhouette" },

@@ -38,8 +38,17 @@ export const minecraftGame: GameConfig = {
     bgGradient: "linear-gradient(180deg, #c0e2a5 0%, #8ec06c 60%, #6f9356 100%)"
   },
 
-  // No YouTube tracks supplied — audio manager falls back to synth music
-  music: { lobby: null, battle: null, correct: null, winner: null },
+  // Reuses the same YouTube tracks as Pokémon — chiptune lobby + battle
+  // theme + correct-answer fanfare + winner victory tune all share the
+  // four-slot music kit. The audio manager keys YT iframes by gameId so
+  // each game still gets its own player instance and can be muted
+  // independently.
+  music: {
+    lobby:   "l490gxtJMW4",
+    battle:  "PfDhKzpUieA",
+    correct: "zhCXcOGhy4c",
+    winner:  "nyINomMu61E"
+  },
 
   categories: [
     { id: "blocks",   label: "Blocks",   icon: ICON_MC_BLOCKS,   iconAlt: "Block stack" },
