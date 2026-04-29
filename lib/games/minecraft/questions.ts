@@ -80,18 +80,45 @@ function wikiName(displayName: string) {
 // includes hundreds of items, but image lookup is best-effort, so we keep
 // the visible pool tight for predictability.
 
-const BLOCK_POOL_EASY = [
-  "Cobblestone", "Oak_Planks", "Stone", "Sand", "Dirt",
-  "Furnace", "Crafting_Table", "Bookshelf", "Chest", "Glass"
+/** Each block carries its iconic colour so we can ask "what colour is X?" */
+type BlockEntry = { slug: string; colour: string };
+const BLOCK_POOL_EASY: BlockEntry[] = [
+  { slug: "Cobblestone",     colour: "Gray" },
+  { slug: "Oak_Planks",      colour: "Brown" },
+  { slug: "Stone",           colour: "Gray" },
+  { slug: "Sand",            colour: "Yellow" },
+  { slug: "Dirt",            colour: "Brown" },
+  { slug: "Furnace",         colour: "Gray" },
+  { slug: "Crafting_Table",  colour: "Brown" },
+  { slug: "Bookshelf",       colour: "Brown" },
+  { slug: "Glass",           colour: "White" },
+  { slug: "Chest",           colour: "Brown" }
 ];
-const BLOCK_POOL_MEDIUM = [
-  "Diamond_Ore", "Redstone_Ore", "Obsidian", "Glowstone",
-  "Sea_Lantern", "End_Stone", "Nether_Bricks", "Quartz_Block",
-  "Honeycomb_Block"
+const BLOCK_POOL_MEDIUM: BlockEntry[] = [
+  { slug: "Diamond_Ore",     colour: "Cyan" },
+  { slug: "Redstone_Ore",    colour: "Red" },
+  { slug: "Obsidian",        colour: "Black" },
+  { slug: "Glowstone",       colour: "Yellow" },
+  { slug: "Sea_Lantern",     colour: "White" },
+  { slug: "End_Stone",       colour: "Yellow" },
+  { slug: "Nether_Bricks",   colour: "Red" },
+  { slug: "Quartz_Block",    colour: "White" },
+  { slug: "Honeycomb_Block", colour: "Orange" }
 ];
-const BLOCK_POOL_HARD = [
-  "Beacon", "Conduit", "Reinforced_Deepslate", "Sculk_Catalyst",
-  "Sculk_Sensor", "Echo_Shard", "Allium", "Lily_of_the_Valley"
+const BLOCK_POOL_HARD: BlockEntry[] = [
+  { slug: "Beacon",                colour: "Cyan" },
+  { slug: "Conduit",               colour: "Cyan" },
+  { slug: "Reinforced_Deepslate",  colour: "Black" },
+  { slug: "Sculk_Catalyst",        colour: "Black" },
+  { slug: "Sculk_Sensor",          colour: "Cyan" },
+  { slug: "Echo_Shard",            colour: "Cyan" },
+  { slug: "Allium",                colour: "Purple" },
+  { slug: "Lily_of_the_Valley",    colour: "White" }
+];
+
+const ALL_BLOCK_COLOURS = [
+  "Red", "Blue", "Yellow", "Green", "Orange", "Purple",
+  "Black", "White", "Brown", "Gray", "Cyan"
 ];
 
 const MOB_POOL_EASY: { name: string; hostile: boolean }[] = [
@@ -148,59 +175,139 @@ const ITEM_POOL_HARD: { name: string; stack: 64 | 16 | 1 }[] = [
 ];
 
 type ToolTier = "Wood" | "Stone" | "Iron" | "Gold" | "Diamond" | "Netherite";
-const TOOL_POOL_EASY: { name: string; tier: ToolTier }[] = [
-  { name: "Wooden_Sword",  tier: "Wood" },
-  { name: "Stone_Pickaxe", tier: "Stone" },
-  { name: "Iron_Axe",      tier: "Iron" }
+type ToolEntry = { name: string; tier: ToolTier; colour: string };
+
+/** Tool material colour — matches the in-game blade/head appearance. */
+const TOOL_TIER_COLOUR: Record<ToolTier, string> = {
+  Wood:      "Brown",
+  Stone:     "Gray",
+  Iron:      "Light Gray",
+  Gold:      "Yellow",
+  Diamond:   "Cyan",
+  Netherite: "Black"
+};
+
+const TOOL_POOL_EASY: ToolEntry[] = [
+  { name: "Wooden_Sword",  tier: "Wood",  colour: TOOL_TIER_COLOUR.Wood },
+  { name: "Stone_Pickaxe", tier: "Stone", colour: TOOL_TIER_COLOUR.Stone },
+  { name: "Iron_Axe",      tier: "Iron",  colour: TOOL_TIER_COLOUR.Iron }
 ];
-const TOOL_POOL_MEDIUM: { name: string; tier: ToolTier }[] = [
-  { name: "Iron_Sword",      tier: "Iron" },
-  { name: "Diamond_Pickaxe", tier: "Diamond" },
-  { name: "Stone_Shovel",    tier: "Stone" },
-  { name: "Gold_Hoe",        tier: "Gold" }
+const TOOL_POOL_MEDIUM: ToolEntry[] = [
+  { name: "Iron_Sword",      tier: "Iron",    colour: TOOL_TIER_COLOUR.Iron },
+  { name: "Diamond_Pickaxe", tier: "Diamond", colour: TOOL_TIER_COLOUR.Diamond },
+  { name: "Stone_Shovel",    tier: "Stone",   colour: TOOL_TIER_COLOUR.Stone },
+  { name: "Gold_Hoe",        tier: "Gold",    colour: TOOL_TIER_COLOUR.Gold }
 ];
-const TOOL_POOL_HARD: { name: string; tier: ToolTier }[] = [
-  { name: "Netherite_Sword",   tier: "Netherite" },
-  { name: "Netherite_Pickaxe", tier: "Netherite" },
-  { name: "Diamond_Axe",       tier: "Diamond" },
-  { name: "Gold_Sword",        tier: "Gold" }
+const TOOL_POOL_HARD: ToolEntry[] = [
+  { name: "Netherite_Sword",   tier: "Netherite", colour: TOOL_TIER_COLOUR.Netherite },
+  { name: "Netherite_Pickaxe", tier: "Netherite", colour: TOOL_TIER_COLOUR.Netherite },
+  { name: "Diamond_Axe",       tier: "Diamond",   colour: TOOL_TIER_COLOUR.Diamond },
+  { name: "Gold_Sword",        tier: "Gold",      colour: TOOL_TIER_COLOUR.Gold }
 ];
 
 const ALL_TIERS: ToolTier[] = ["Wood", "Stone", "Iron", "Gold", "Diamond", "Netherite"];
+const ALL_TOOL_COLOURS = ["Brown", "Gray", "Light Gray", "Yellow", "Cyan", "Black"];
 
 // ==========================================================================
 //  GENERATORS
 // ==========================================================================
 
-async function genBlock(displayName: string, difficulty: Difficulty, allBlocks: string[]): Promise<Question> {
-  const correct = displayName.replace(/_/g, " ");
-  const wrongs = pickN(allBlocks.filter((b) => b !== displayName), 3)
-    .map((n) => n.replace(/_/g, " "));
+/**
+ * "Which block is this?" — show the block in full colour so players can
+ * actually identify it. Naming a block from a black silhouette is the
+ * wrong puzzle because Minecraft blocks are mostly cubic shapes.
+ */
+async function genBlockName(
+  block: BlockEntry,
+  difficulty: Difficulty,
+  allBlocks: BlockEntry[]
+): Promise<Question> {
+  const correct = block.slug.replace(/_/g, " ");
+  const wrongs = pickN(allBlocks.filter((b) => b.slug !== block.slug), 3)
+    .map((b) => b.slug.replace(/_/g, " "));
   const opts = shuffle([correct, ...wrongs]) as [string, string, string, string];
   return {
-    id: `mc-block-${displayName}`,
+    id: `mc-blockname-${block.slug}`,
     categoryId: "blocks",
     difficulty,
     value: POINTS_FOR[difficulty],
     prompt: "Which block is this?",
     options: opts,
     answerIndex: opts.indexOf(correct) as 0 | 1 | 2 | 3,
-    image: WIKI_FILE(displayName + ".png")
+    image: WIKI_FILE(block.slug + ".png"),
+    preventSilhouette: true
   };
 }
 
-async function genMob(
+/**
+ * "What colour is the X block?" — silhouette the image so the colour
+ * is hidden, and put the block name in the prompt. Player has to recall
+ * the colour from memory.
+ */
+async function genBlockColour(
+  block: BlockEntry,
+  difficulty: Difficulty
+): Promise<Question> {
+  const niceName = block.slug.replace(/_/g, " ");
+  const wrongs = pickN(ALL_BLOCK_COLOURS, 3, new Set([block.colour]));
+  const opts = shuffle([block.colour, ...wrongs]) as [string, string, string, string];
+  return {
+    id: `mc-blockcolour-${block.slug}`,
+    categoryId: "blocks",
+    difficulty,
+    value: POINTS_FOR[difficulty],
+    prompt: `What is the dominant colour of the ${niceName} block?`,
+    options: opts,
+    answerIndex: opts.indexOf(block.colour) as 0 | 1 | 2 | 3,
+    image: WIKI_FILE(block.slug + ".png"),
+    forceSilhouette: true
+  };
+}
+
+/** "Is the X mob hostile or passive?" — prompt names the mob, image shown. */
+async function genMobBehaviour(
   mob: { name: string; hostile: boolean },
   difficulty: Difficulty
 ): Promise<Question> {
   const correct = mob.hostile ? "Hostile" : "Passive";
-  const opts = ["Hostile", "Passive", "Boss", "Vehicle"] as [string, string, string, string];
+  const opts = shuffle([
+    "Hostile", "Passive", "Boss", "Vehicle"
+  ]) as [string, string, string, string];
   return {
-    id: `mc-mob-${mob.name}`,
+    id: `mc-mobbehaviour-${mob.name}`,
     categoryId: "mobs",
     difficulty,
     value: POINTS_FOR[difficulty],
     prompt: `Is the ${mob.name.replace(/_/g, " ")} hostile or passive?`,
+    options: opts,
+    answerIndex: opts.indexOf(correct) as 0 | 1 | 2 | 3,
+    image: WIKI_FILE(mob.name + ".png"),
+    preventSilhouette: true
+  };
+}
+
+/**
+ * "Which mob is this?" — show the mob in full colour, options are mob
+ * names. Adds variety to the Mobs category beyond hostile/passive and
+ * is genuinely harder for the obscure mobs (Allay, Frog, Bogged…).
+ */
+async function genMobName(
+  mob: { name: string; hostile: boolean },
+  difficulty: Difficulty,
+  allMobs: { name: string; hostile: boolean }[]
+): Promise<Question> {
+  const correct = mob.name.replace(/_/g, " ");
+  const wrongs = pickN(
+    allMobs.filter((m) => m.name !== mob.name).map((m) => m.name.replace(/_/g, " ")),
+    3
+  );
+  const opts = shuffle([correct, ...wrongs]) as [string, string, string, string];
+  return {
+    id: `mc-mobname-${mob.name}`,
+    categoryId: "mobs",
+    difficulty,
+    value: POINTS_FOR[difficulty],
+    prompt: "Which Minecraft mob is this?",
     options: opts,
     answerIndex: opts.indexOf(correct) as 0 | 1 | 2 | 3,
     image: WIKI_FILE(mob.name + ".png"),
@@ -221,6 +328,9 @@ async function genBiome(
   const correct = dimensionNames[biome.dimension] || "Overworld";
   const wrongs = pickN(allDimensions.filter((d) => d !== correct), 3);
   const opts = shuffle([correct, ...wrongs]) as [string, string, string, string];
+  // Real biome screenshot from minecraft.wiki — every biome's displayName
+  // (with spaces → underscores) resolves to a PNG via Special:FilePath.
+  const biomeImage = WIKI_FILE(biome.displayName.replace(/ /g, "_") + ".png");
   return {
     id: `mc-biome-${biome.name}`,
     categoryId: "biomes",
@@ -229,8 +339,7 @@ async function genBiome(
     prompt: `Which dimension is the ${biome.displayName} biome in?`,
     options: opts,
     answerIndex: opts.indexOf(correct) as 0 | 1 | 2 | 3,
-    // Biomes have no per-biome sprites on the wiki; show the biome category icon
-    image: WIKI_FILE("Stone.png"),
+    image: biomeImage,
     preventSilhouette: true
   };
 }
@@ -254,22 +363,54 @@ async function genItem(
   };
 }
 
-async function genTool(
-  tool: { name: string; tier: ToolTier },
+/**
+ * "Which tier is this tool?" — MUST show full colour, because the tier
+ * is identified by the material colour (wood = brown, iron = silver,
+ * diamond = cyan, etc.). Silhouetting hides the very thing you need
+ * to answer.
+ */
+async function genToolTier(
+  tool: ToolEntry,
   difficulty: Difficulty
 ): Promise<Question> {
   const correct = tool.tier;
   const wrongs = pickN(ALL_TIERS.filter((t) => t !== correct), 3);
   const opts = shuffle([correct, ...wrongs]) as [string, string, string, string];
   return {
-    id: `mc-tool-${tool.name}`,
+    id: `mc-tooltier-${tool.name}`,
     categoryId: "tools",
     difficulty,
     value: POINTS_FOR[difficulty],
     prompt: "Which tier is this tool?",
     options: opts,
     answerIndex: opts.indexOf(correct) as 0 | 1 | 2 | 3,
-    image: WIKI_FILE(tool.name + ".png")
+    image: WIKI_FILE(tool.name + ".png"),
+    preventSilhouette: true
+  };
+}
+
+/**
+ * "What colour is the X tool?" — silhouette so the colour is hidden,
+ * prompt names the tool. Forces players to recall the material colour
+ * from memory.
+ */
+async function genToolColour(
+  tool: ToolEntry,
+  difficulty: Difficulty
+): Promise<Question> {
+  const niceName = tool.name.replace(/_/g, " ");
+  const wrongs = pickN(ALL_TOOL_COLOURS, 3, new Set([tool.colour]));
+  const opts = shuffle([tool.colour, ...wrongs]) as [string, string, string, string];
+  return {
+    id: `mc-toolcolour-${tool.name}`,
+    categoryId: "tools",
+    difficulty,
+    value: POINTS_FOR[difficulty],
+    prompt: `What colour is the ${niceName}?`,
+    options: opts,
+    answerIndex: opts.indexOf(tool.colour) as 0 | 1 | 2 | 3,
+    image: WIKI_FILE(tool.name + ".png"),
+    forceSilhouette: true
   };
 }
 
@@ -361,6 +502,7 @@ export async function buildMinecraftQuestions(): Promise<Question[]> {
   }
 
   const allBlocks = [...BLOCK_POOL_EASY, ...BLOCK_POOL_MEDIUM, ...BLOCK_POOL_HARD];
+  const allMobs = [...MOB_POOL_EASY, ...MOB_POOL_MEDIUM, ...MOB_POOL_HARD];
 
   // Biome easy = mix of overworld biomes; medium = nether biomes; hard = end + obscure
   const biomeEasy = shuffle(overworldBiomes).slice(0, 6);
@@ -368,6 +510,51 @@ export async function buildMinecraftQuestions(): Promise<Question[]> {
     .concat(shuffle(overworldBiomes).slice(0, 2));
   const biomeHard = shuffle(endBiomes).slice(0, 4)
     .concat(shuffle(overworldBiomes).filter((b) => b.category === "extreme_hills" || b.category === "icy" || b.category === "mushroom").slice(0, 2));
+
+  /**
+   * Coin-flip between two question shapes per slot. Each call shuffles
+   * the pool so the same items don't appear in the same order on every
+   * play, and randomly picks one of two generators per slot.
+   */
+  async function blockMix(pool: BlockEntry[], difficulty: Difficulty): Promise<Question[]> {
+    const out: Question[] = [];
+    for (const b of shuffle(pool)) {
+      if (out.length >= 2) break;
+      try {
+        const askColour = Math.random() < 0.5;
+        out.push(askColour
+          ? await genBlockColour(b, difficulty)
+          : await genBlockName(b, difficulty, allBlocks));
+      } catch { /* skip and try next */ }
+    }
+    return out;
+  }
+  async function mobMix(pool: typeof MOB_POOL_EASY, difficulty: Difficulty): Promise<Question[]> {
+    const out: Question[] = [];
+    for (const m of shuffle(pool)) {
+      if (out.length >= 2) break;
+      try {
+        const askName = Math.random() < 0.5;
+        out.push(askName
+          ? await genMobName(m, difficulty, allMobs)
+          : await genMobBehaviour(m, difficulty));
+      } catch { /* skip */ }
+    }
+    return out;
+  }
+  async function toolMix(pool: ToolEntry[], difficulty: Difficulty): Promise<Question[]> {
+    const out: Question[] = [];
+    for (const t of shuffle(pool)) {
+      if (out.length >= 2) break;
+      try {
+        const askColour = Math.random() < 0.5;
+        out.push(askColour
+          ? await genToolColour(t, difficulty)
+          : await genToolTier(t, difficulty));
+      } catch { /* skip */ }
+    }
+    return out;
+  }
 
   const [
     blocksE, blocksM, blocksH,
@@ -377,13 +564,13 @@ export async function buildMinecraftQuestions(): Promise<Question[]> {
     toolsE,  toolsM,  toolsH,
     craftingE, craftingM, craftingH
   ] = await Promise.all([
-    pair(shuffle(BLOCK_POOL_EASY),   "easy",   (n, d) => genBlock(n, d, allBlocks)),
-    pair(shuffle(BLOCK_POOL_MEDIUM), "medium", (n, d) => genBlock(n, d, allBlocks)),
-    pair(shuffle(BLOCK_POOL_HARD),   "hard",   (n, d) => genBlock(n, d, allBlocks)),
+    blockMix(BLOCK_POOL_EASY,   "easy"),
+    blockMix(BLOCK_POOL_MEDIUM, "medium"),
+    blockMix(BLOCK_POOL_HARD,   "hard"),
 
-    pair(shuffle(MOB_POOL_EASY),   "easy",   genMob),
-    pair(shuffle(MOB_POOL_MEDIUM), "medium", genMob),
-    pair(shuffle(MOB_POOL_HARD),   "hard",   genMob),
+    mobMix(MOB_POOL_EASY,   "easy"),
+    mobMix(MOB_POOL_MEDIUM, "medium"),
+    mobMix(MOB_POOL_HARD,   "hard"),
 
     pair(biomeEasy,   "easy",   (b, d) => genBiome(b, d, dimensions)),
     pair(biomeMedium, "medium", (b, d) => genBiome(b, d, dimensions)),
@@ -393,9 +580,9 @@ export async function buildMinecraftQuestions(): Promise<Question[]> {
     pair(shuffle(ITEM_POOL_MEDIUM), "medium", genItem),
     pair(shuffle(ITEM_POOL_HARD),   "hard",   genItem),
 
-    pair(shuffle(TOOL_POOL_EASY),   "easy",   genTool),
-    pair(shuffle(TOOL_POOL_MEDIUM), "medium", genTool),
-    pair(shuffle(TOOL_POOL_HARD),   "hard",   genTool),
+    toolMix(TOOL_POOL_EASY,   "easy"),
+    toolMix(TOOL_POOL_MEDIUM, "medium"),
+    toolMix(TOOL_POOL_HARD,   "hard"),
 
     pair(shuffle(CRAFTING_QS.filter((q) => q.difficulty === "easy")),   "easy",   (q) => genCrafting(q)),
     pair(shuffle(CRAFTING_QS.filter((q) => q.difficulty === "medium")), "medium", (q) => genCrafting(q)),
