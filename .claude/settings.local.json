@@ -83,7 +83,13 @@
       "Bash(/usr/bin/curl -s -L -m 8 -I \"https://upload.wikimedia.org/wikipedia/en/thumb/7/73/Arc_Raiders_cover_art.jpg/250px-Arc_Raiders_cover_art.jpg\")",
       "Bash(/usr/bin/curl -s -L -m 8 -o /dev/null -w \"300px → %{content_type} %{http_code}\\\\n\" \"https://upload.wikimedia.org/wikipedia/en/thumb/7/73/Arc_Raiders_cover_art.jpg/300px-Arc_Raiders_cover_art.jpg\")",
       "Bash(/usr/bin/curl -s -L -m 8 -o /dev/null -w \"400px → %{content_type} %{http_code}\\\\n\" \"https://upload.wikimedia.org/wikipedia/en/thumb/7/73/Arc_Raiders_cover_art.jpg/400px-Arc_Raiders_cover_art.jpg\")",
-      "Bash(/usr/bin/curl -s -L -m 8 -o /dev/null -w \"Special:FilePath → %{content_type} %{http_code}\\\\n\" \"https://en.wikipedia.org/wiki/Special:FilePath/Arc_Raiders_cover_art.jpg\")"
+      "Bash(/usr/bin/curl -s -L -m 8 -o /dev/null -w \"Special:FilePath → %{content_type} %{http_code}\\\\n\" \"https://en.wikipedia.org/wiki/Special:FilePath/Arc_Raiders_cover_art.jpg\")",
+      "Bash(/usr/bin/python3 -c \" import json, sys d = json.load\\(sys.stdin\\)['data'] rarities = sorted\\({i.get\\('rarity'\\) for i in d if i.get\\('rarity'\\)}\\) types = sorted\\({i.get\\('item_type'\\) for i in d if i.get\\('item_type'\\)}\\) print\\(' rarities:', rarities\\) print\\(' item_types:', types\\) print\\(' total items:', len\\(d\\)\\) print\\(\\) print\\(' Sample weapons \\(Primary\\):'\\) for i in [x for x in d if x.get\\('item_type'\\) == 'Primary Weapon'][:5]: print\\(f\\\\\" {i['name']} rarity={i.get\\('rarity'\\)} value={i.get\\('value'\\)}\\\\\"\\) print\\(\\) print\\(' Sample materials:'\\) for i in [x for x in d if 'Material' in \\(x.get\\('item_type'\\) or ''\\)][:5]: print\\(f\\\\\" {i['name']} type={i.get\\('item_type'\\)} value={i.get\\('value'\\)}\\\\\"\\) \" echo echo \"--- /traders structure:\" /usr/bin/curl -s -L -m 8 https://metaforge.app/api/arc-raiders/traders)",
+      "Bash(/usr/bin/curl -s -I -H \"Origin: http://localhost:3000\" \"https://metaforge.app/api/arc-raiders/items\")",
+      "Bash(/usr/bin/grep -iE \"access-control|cors|x-frame\")",
+      "Bash(/usr/bin/curl -s -X OPTIONS -H \"Origin: http://localhost:3000\" -H \"Access-Control-Request-Method: GET\" -I \"https://metaforge.app/api/arc-raiders/items\")",
+      "Bash(/usr/bin/head -15)",
+      "Bash(/usr/bin/curl -s -L -m 8 \"http://localhost:3000/api/arc-raiders/items\")"
     ]
   }
 }

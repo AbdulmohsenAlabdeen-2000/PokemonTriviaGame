@@ -239,7 +239,7 @@ export default function Play({
       })
       .catch((err: Error) => {
         if (cancelled) return;
-        dispatch({ type: "QUESTIONS_FAILED", error: err?.message || "Failed to load PokeAPI" });
+        dispatch({ type: "QUESTIONS_FAILED", error: err?.message || "Failed to load questions" });
       });
     return () => { cancelled = true; };
   }, []);
@@ -744,7 +744,7 @@ function TeamPanel({
   );
 }
 
-// Loading screen — shown while we fetch question data from PokeAPI on mount.
+// Loading screen — shown while we fetch question data on mount.
 function LoadingScreen() {
   return (
     <section className="card stage" style={{ textAlign: "center" }}>
@@ -755,22 +755,22 @@ function LoadingScreen() {
         <div className="lp-button" />
       </div>
       <h2 className="title" style={{ fontSize: "clamp(22px, 4vw, 36px)", marginTop: 8 }}>
-        Loading Pokémon data…
+        Loading game data…
       </h2>
       <p className="subtitle" style={{ marginTop: 6 }}>
-        Building 36 fresh questions from PokeAPI.
+        Building 36 fresh questions from the live API.
       </p>
     </section>
   );
 }
 
-// Error screen — shown if the PokeAPI fetch fails (network down, etc.).
+// Error screen — shown if the fetch fails (network down, etc.).
 function ErrorScreen({ message }: { message: string }) {
   return (
     <section className="card stage" style={{ textAlign: "center" }}>
       <div className="crown" style={{ fontSize: 64 }}>⚠️</div>
       <h2 className="title" style={{ fontSize: "clamp(22px, 4vw, 36px)" }}>
-        Could not reach PokeAPI
+        Could not load questions
       </h2>
       <p className="subtitle" style={{ marginTop: 6, color: "#666" }}>
         {message}
