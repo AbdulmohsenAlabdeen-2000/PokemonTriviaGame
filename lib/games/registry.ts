@@ -15,6 +15,7 @@ import type { GameConfig } from "./types";
 import { pokemonGame } from "./pokemon";
 import { minecraftGame } from "./minecraft";
 import { arcRaidersGame } from "./arc-raiders";
+import { cs2Game } from "./cs2";
 
 export type GameEntry = {
   config: GameConfig;
@@ -24,7 +25,8 @@ export type GameEntry = {
 export const GAMES: GameEntry[] = [
   { config: pokemonGame,    playable: true },
   { config: minecraftGame,  playable: true },
-  { config: arcRaidersGame, playable: true }
+  { config: arcRaidersGame, playable: true },
+  { config: cs2Game,        playable: true }
 ];
 
 export function gameById(id: string): GameConfig | null {

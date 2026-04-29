@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CS_BUTTERFLY_EMERALD } from "@/lib/games/cs2/icons";
+
+// Real game-asset cursor sources. Each is hot-link friendly and small enough
+// to read at 32-36px after CSS scaling.
+const MC_DIAMOND_SWORD = "https://minecraft.wiki/Special:FilePath/Diamond_Sword.png";
+const ARC_SENTINEL =
+  "https://unhbvkszwhczbjxgetgk.supabase.co/storage/v1/object/public/images/arc-raiders/icons/sentinel.webp";
 
 /**
  * Game-aware floating cursor that follows the mouse and plays a "capture"
@@ -83,36 +90,15 @@ export default function PokeballCursor() {
           <div className="pb-belt" />
           <div className="pb-button" />
         </div>
-        {/* Per-game cursor — Minecraft Diamond Sword */}
-        <svg className="pb-mc-sword" viewBox="0 0 32 32" aria-hidden="true">
-          {/* Hilt */}
-          <rect x="4" y="22" width="6" height="6" fill="#7e4c1c" stroke="#1b1b1b" strokeWidth="1"/>
-          {/* Crossguard */}
-          <rect x="2" y="20" width="10" height="2" fill="#3a2310" stroke="#1b1b1b" strokeWidth="1"/>
-          {/* Blade — diamond cyan with darker edge */}
-          <polygon
-            points="10,18 18,10 22,12 26,8 28,10 12,26 10,24"
-            fill="#5dd3e0"
-            stroke="#1b1b1b"
-            strokeWidth="1.2"
-            strokeLinejoin="round"
-          />
-          <polygon
-            points="12,18 18,12 24,14 14,24"
-            fill="#a8e8f0"
-          />
-        </svg>
-        {/* Per-game cursor — ARC Raiders targeting reticle */}
-        <svg className="pb-arc-reticle" viewBox="0 0 32 32" aria-hidden="true">
-          <circle cx="16" cy="16" r="13" fill="none" stroke="#d4a14a" strokeWidth="1.8"/>
-          <circle cx="16" cy="16" r="9" fill="none" stroke="#d4a14a" strokeWidth="1.2" opacity="0.65"/>
-          <circle cx="16" cy="16" r="1.6" fill="#ee1515"/>
-          {/* Crosshair tick marks at NSEW */}
-          <line x1="16" y1="0"  x2="16" y2="6"  stroke="#d4a14a" strokeWidth="1.8"/>
-          <line x1="16" y1="26" x2="16" y2="32" stroke="#d4a14a" strokeWidth="1.8"/>
-          <line x1="0"  y1="16" x2="6"  y2="16" stroke="#d4a14a" strokeWidth="1.8"/>
-          <line x1="26" y1="16" x2="32" y2="16" stroke="#d4a14a" strokeWidth="1.8"/>
-        </svg>
+        {/* Per-game cursor — real Minecraft Diamond Sword PNG (16px pixel art) */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="pb-mc-sword" src={MC_DIAMOND_SWORD} alt="" />
+        {/* Per-game cursor — real ARC Raiders Sentinel enemy icon */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="pb-arc-reticle" src={ARC_SENTINEL} alt="" />
+        {/* Per-game cursor — real Butterfly Knife | Gamma Doppler (emerald phase) skin */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="pb-cs-butterfly" src={CS_BUTTERFLY_EMERALD} alt="" />
       </div>
     </div>
   );
