@@ -82,22 +82,43 @@ const EVO_POOL_HARD = [
   519  // Pidove → Tranquill
 ];
 
-const ITEM_POOL_EASY = [
-  { slug: "poke-ball",  name: "Poké Ball" },
-  { slug: "great-ball", name: "Great Ball" },
-  { slug: "ultra-ball", name: "Ultra Ball" }
+/**
+ * Ball pools — each entry includes the ball's iconic top-half colour so we
+ * can ask "what colour is this ball?" questions. The pools are wider than
+ * the 2-per-difficulty quota so each game pulls a randomised pair.
+ */
+type BallEntry = { slug: string; name: string; colour: string };
+
+const BALL_POOL_EASY: BallEntry[] = [
+  { slug: "poke-ball",    name: "Poké Ball",    colour: "Red" },
+  { slug: "great-ball",   name: "Great Ball",   colour: "Blue" },
+  { slug: "ultra-ball",   name: "Ultra Ball",   colour: "Black" },
+  { slug: "premier-ball", name: "Premier Ball", colour: "White" },
+  { slug: "heal-ball",    name: "Heal Ball",    colour: "Pink" },
+  { slug: "nest-ball",    name: "Nest Ball",    colour: "Green" }
 ];
-const ITEM_POOL_MEDIUM = [
-  { slug: "master-ball",  name: "Master Ball" },
-  { slug: "premier-ball", name: "Premier Ball" },
-  { slug: "luxury-ball",  name: "Luxury Ball" }
+const BALL_POOL_MEDIUM: BallEntry[] = [
+  { slug: "master-ball",  name: "Master Ball",  colour: "Purple" },
+  { slug: "luxury-ball",  name: "Luxury Ball",  colour: "Black" },
+  { slug: "net-ball",     name: "Net Ball",     colour: "Blue" },
+  { slug: "dive-ball",    name: "Dive Ball",    colour: "Blue" },
+  { slug: "timer-ball",   name: "Timer Ball",   colour: "White" },
+  { slug: "repeat-ball",  name: "Repeat Ball",  colour: "Yellow" }
 ];
-const ITEM_POOL_HARD = [
-  { slug: "net-ball",   name: "Net Ball" },
-  { slug: "dive-ball",  name: "Dive Ball" },
-  { slug: "quick-ball", name: "Quick Ball" },
-  { slug: "dusk-ball",  name: "Dusk Ball" },
-  { slug: "heal-ball",  name: "Heal Ball" }
+const BALL_POOL_HARD: BallEntry[] = [
+  { slug: "quick-ball",   name: "Quick Ball",   colour: "Yellow" },
+  { slug: "dusk-ball",    name: "Dusk Ball",    colour: "Green" },
+  { slug: "lure-ball",    name: "Lure Ball",    colour: "Blue" },
+  { slug: "moon-ball",    name: "Moon Ball",    colour: "Yellow" },
+  { slug: "love-ball",    name: "Love Ball",    colour: "Pink" },
+  { slug: "friend-ball",  name: "Friend Ball",  colour: "Green" },
+  { slug: "fast-ball",    name: "Fast Ball",    colour: "Yellow" },
+  { slug: "heavy-ball",   name: "Heavy Ball",   colour: "Gray" },
+  { slug: "level-ball",   name: "Level Ball",   colour: "Red" }
+];
+
+const ALL_BALL_COLOURS = [
+  "Red", "Blue", "Yellow", "Green", "Black", "White", "Purple", "Pink", "Gray"
 ];
 
 // ----- API types (only the fields we read) -------------------------------
@@ -306,24 +327,54 @@ async function genStat(
   };
 }
 
-async function genBall(
-  ball: { slug: string; name: string },
+/** "Which Poké Ball is shown here?" — full-colour ball image. */
+async function genBallName(
+  ball: BallEntry,
   difficulty: Difficulty,
-  allBalls: { slug: string; name: string }[]
+  allBalls: BallEntry[]
 ): Promise<Question> {
   const item = await fetchJson<PokeAPIItem>(`${POKE_API}/item/${ball.slug}`);
   const correct = ball.name;
   const wrongs = pickN(allBalls.map((b) => b.name), 3, new Set([correct]));
   const opts = shuffle([correct, ...wrongs]) as [string, string, string, string];
   return {
-    id: `gen-ball-${ball.slug}`,
+    id: `gen-ballname-${ball.slug}`,
     categoryId: "balls",
     difficulty,
     value: POINTS_FOR[difficulty],
     prompt: "Which Poké Ball is shown here?",
     options: opts,
     answerIndex: opts.indexOf(correct) as 0 | 1 | 2 | 3,
-    image: item.sprites.default || ""
+    image: item.sprites.default || "",
+    // Ball-NAME questions need the colour to be visible.
+    preventSilhouette: true
+  };
+}
+
+/**
+ * "What colour is the X Ball?" — the ball name is in the prompt and the
+ * image is rendered as a black silhouette so the player can't peek at the
+ * actual colours. Answer pulled from the ball's `colour` metadata.
+ */
+async function genBallColour(
+  ball: BallEntry,
+  difficulty: Difficulty
+): Promise<Question> {
+  const item = await fetchJson<PokeAPIItem>(`${POKE_API}/item/${ball.slug}`);
+  const correct = ball.colour;
+  const wrongs = pickN(ALL_BALL_COLOURS, 3, new Set([correct]));
+  const opts = shuffle([correct, ...wrongs]) as [string, string, string, string];
+  return {
+    id: `gen-ballcolour-${ball.slug}`,
+    categoryId: "balls",
+    difficulty,
+    value: POINTS_FOR[difficulty],
+    prompt: `What colour is the top half of a ${ball.name}?`,
+    options: opts,
+    answerIndex: opts.indexOf(correct) as 0 | 1 | 2 | 3,
+    image: item.sprites.default || "",
+    // Force the silhouette so players can't read the colour off the image.
+    forceSilhouette: true
   };
 }
 
@@ -363,7 +414,34 @@ export async function buildGameQuestionsFromAPI(): Promise<Question[]> {
   const mediumIds = shuffle(POOL_MEDIUM).slice(0, 12);
   const hardIds   = shuffle(POOL_HARD).slice(0, 12);
 
-  const allBalls = [...ITEM_POOL_EASY, ...ITEM_POOL_MEDIUM, ...ITEM_POOL_HARD];
+  const allBalls = [...BALL_POOL_EASY, ...BALL_POOL_MEDIUM, ...BALL_POOL_HARD];
+
+  /**
+   * Build the 2 ball questions for one difficulty bucket. Mixes ball-name
+   * and ball-colour generators with a coin flip so each game ships a
+   * different mix, and shuffles the pool so the SAME two balls aren't
+   * picked every play.
+   */
+  async function ballPair(pool: BallEntry[], difficulty: Difficulty): Promise<Question[]> {
+    const shuffled = shuffle(pool);
+    const out: Question[] = [];
+    for (let i = 0; i < shuffled.length && out.length < 2; i++) {
+      const askColour = Math.random() < 0.5;
+      try {
+        const q = askColour
+          ? await genBallColour(shuffled[i], difficulty)
+          : await genBallName(shuffled[i], difficulty, allBalls);
+        out.push(q);
+      } catch { /* skip and try next ball */ }
+    }
+    // If for some reason we didn't get two, pad with the other generator.
+    if (out.length < 2 && shuffled.length > out.length) {
+      try {
+        out.push(await genBallName(shuffled[out.length], difficulty, allBalls));
+      } catch { /* ignore */ }
+    }
+    return out;
+  }
 
   // Curated pools used ONLY for evolution questions — every entry has a
   // next evolution, so genEvolution can't return null on these.
@@ -419,9 +497,9 @@ export async function buildGameQuestionsFromAPI(): Promise<Question[]> {
     pair(mediumIds.slice(6, 12),"medium", genStat),
     pair(hardIds.slice(6, 12),  "hard",   genStat),
 
-    Promise.all(ITEM_POOL_EASY.slice(0, 2).map((b) => genBall(b, "easy",   allBalls))),
-    Promise.all(ITEM_POOL_MEDIUM.slice(0, 2).map((b) => genBall(b, "medium", allBalls))),
-    Promise.all(ITEM_POOL_HARD.slice(0, 2).map((b) => genBall(b, "hard",    allBalls))),
+    ballPair(BALL_POOL_EASY,   "easy"),
+    ballPair(BALL_POOL_MEDIUM, "medium"),
+    ballPair(BALL_POOL_HARD,   "hard"),
 
     pair(easyIds.slice(0, 6),   "easy",   genColor),
     pair(mediumIds.slice(0, 6), "medium", genColor),
