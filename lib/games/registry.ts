@@ -52,10 +52,10 @@ const arcRaidersPlaceholder: GameConfig = {
   description:
     "Salvage your way through 36 questions about ARC Raiders' weapons, items, traders, " +
     "quests, and the deadly ARC machines themselves. Live data from MetaForge.",
-  // The "Bastion" ARC — iconic heavy minigun unit, the most recognisable
-  // ARC enemy in the game. Image served by MetaForge.
-  splash: "https://unhbvkszwhczbjxgetgk.supabase.co/storage/v1/object/public/images/arc-raiders/icons/bastion.webp",
-  splashAlt: "ARC Raiders Bastion enemy",
+  // Official ARC Raiders cover art, served by Wikimedia's Special:FilePath
+  // (resolves to a hot-link-friendly image/jpeg with the standard thumb size).
+  splash: "https://en.wikipedia.org/wiki/Special:FilePath/Arc_Raiders_cover_art.jpg",
+  splashAlt: "ARC Raiders cover art",
   theme: {
     bodyAttr: "arc-raiders",
     primary:    "#d4a14a",
