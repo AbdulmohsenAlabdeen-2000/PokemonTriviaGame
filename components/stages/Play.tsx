@@ -581,13 +581,14 @@ function QuestionView({
       )}
 
       {(() => {
-        // Silhouette the icon ("Who's that Pokémon?" style) on categories
-        // where guessing from shape alone is the puzzle. Skip silhouette for:
-        //   - Colors:    color IS the answer, can't silhouette it
-        //   - PokeBalls: every ball would look identical as a silhouette
-        // The silhouette is removed during the reveal phase so players see
-        // the full-color sprite when the answer is shown.
-        const silhouetteable = q.category !== "Colors" && q.category !== "PokeBalls";
+        // Silhouette the icon ("Who's that Pokémon?" style) on every
+        // Pokémon-based category — including Colors, since recognising the
+        // silhouette is what tells you the Pokédex colour. The only skip
+        // is Poké Balls, because every ball would silhouette to the same
+        // round shape and become unguessable.
+        // The silhouette is removed during the reveal phase so players
+        // see the full-color sprite when the answer is shown.
+        const silhouetteable = q.category !== "PokeBalls";
         const silhouette = silhouetteable && phase !== "reveal";
         const cls =
           "q-image" +
