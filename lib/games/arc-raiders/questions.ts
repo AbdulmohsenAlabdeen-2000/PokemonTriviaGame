@@ -41,6 +41,12 @@ type AArc = {
   image: string;
 };
 type ATraders = Record<string, AItem[]>;
+type AQuest = {
+  id: string;
+  name: string;
+  trader_name: string;
+  image: string | null;
+};
 
 // ----- Network cache -----------------------------------------------------
 const cache = new Map<string, unknown>();
@@ -151,7 +157,10 @@ function genArc(arc: AArc, difficulty: Difficulty, allArcs: AArc[]): Question {
     prompt: "Which ARC enemy is this?",
     options: opts,
     answerIndex: opts.indexOf(arc.name) as 0 | 1 | 2 | 3,
-    image: arc.icon
+    image: arc.icon,
+    // Show the real ARC art — silhouette would hide the very thing the
+    // player needs to identify the enemy by.
+    preventSilhouette: true
   };
 }
 
@@ -171,6 +180,28 @@ function genTrader(
     options: opts,
     answerIndex: opts.indexOf(trader) as 0 | 1 | 2 | 3,
     image: item.icon,
+    preventSilhouette: true
+  };
+}
+
+/**
+ * "Which trader assigns the X quest?" — broadens the Traders category
+ * beyond "who sells this item?" into mission-giver trivia.
+ */
+function genQuestGiver(quest: AQuest, difficulty: Difficulty): Question {
+  const correct = quest.trader_name;
+  const wrongs = pickN([...TRADER_NAMES], 3, new Set([correct as typeof TRADER_NAMES[number]]));
+  const opts = shuffle([correct, ...wrongs]) as [string, string, string, string];
+  return {
+    id: `ar-questgiver-${quest.id}`,
+    categoryId: "traders",
+    difficulty,
+    value: POINTS_FOR[difficulty],
+    prompt: `Which trader assigns the "${quest.name}" quest?`,
+    options: opts,
+    answerIndex: opts.indexOf(correct) as 0 | 1 | 2 | 3,
+    // Quest images are sometimes null; fall back to a known-good icon
+    image: quest.image || "https://cdn.metaforge.app/arc-raiders/icons/bandage.webp",
     preventSilhouette: true
   };
 }
@@ -198,15 +229,17 @@ function genValue(item: AItem, difficulty: Difficulty): Question {
 
 export async function buildArcRaidersQuestions(): Promise<Question[]> {
   // Live fetches in parallel
-  const [itemsResp, arcsResp, tradersResp] = await Promise.all([
+  const [itemsResp, arcsResp, tradersResp, questsResp] = await Promise.all([
     fetchJson<{ data: AItem[] }>(`${META}/items`),
     fetchJson<{ data: AArc[] }>(`${META}/arcs`),
-    fetchJson<{ data: ATraders } | { success: boolean; data: ATraders }>(`${META}/traders`)
+    fetchJson<{ data: ATraders } | { success: boolean; data: ATraders }>(`${META}/traders`),
+    fetchJson<{ data: AQuest[] }>(`${META}/quests`).catch(() => ({ data: [] }))
   ]);
 
   const items: AItem[] = itemsResp.data || [];
   const arcs:  AArc[]  = arcsResp.data  || [];
   const traders = (tradersResp as { data: ATraders }).data || {};
+  const quests: AQuest[] = questsResp.data || [];
 
   // Bucket items by difficulty
   const easyItems   = items.filter((i) => difficultyForItem(i.rarity) === "easy");
@@ -225,6 +258,41 @@ export async function buildArcRaidersQuestions(): Promise<Question[]> {
   const easyTraderPairs   = traderItemPairs.filter((p) => difficultyForItem(p.item.rarity) === "easy");
   const mediumTraderPairs = traderItemPairs.filter((p) => difficultyForItem(p.item.rarity) === "medium");
   const hardTraderPairs   = traderItemPairs.filter((p) => difficultyForItem(p.item.rarity) === "hard");
+
+  // Bucket quests 1/3 each so each difficulty gets a fresh set
+  const shuffledQuests = shuffle(quests);
+  const qThird = Math.ceil(quests.length / 3);
+  const easyQuests   = shuffledQuests.slice(0, qThird);
+  const mediumQuests = shuffledQuests.slice(qThird, qThird * 2);
+  const hardQuests   = shuffledQuests.slice(qThird * 2);
+
+  /**
+   * Traders category mix: coin-flips between "Which trader sells X?"
+   * (existing item-based) and "Which trader assigns the X quest?"
+   * (new quest-based). Each slot ships a different mix per game.
+   */
+  function tradersMix(
+    pairs: typeof easyTraderPairs,
+    qPool: AQuest[],
+    difficulty: Difficulty
+  ): Question[] {
+    const out: Question[] = [];
+    const shuffledPairs = shuffle(pairs);
+    const shuffledQuests = shuffle(qPool);
+    let pi = 0, qi = 0;
+    while (out.length < 2 && (pi < shuffledPairs.length || qi < shuffledQuests.length)) {
+      const askQuest = qi < shuffledQuests.length && (pi >= shuffledPairs.length || Math.random() < 0.5);
+      try {
+        if (askQuest) {
+          out.push(genQuestGiver(shuffledQuests[qi++], difficulty));
+        } else {
+          const p = shuffledPairs[pi++];
+          out.push(genTrader(p.trader, p.item, difficulty));
+        }
+      } catch { /* skip */ }
+    }
+    return out;
+  }
 
   // ARCs are not rated by rarity in the API; just split the list 1/3 each
   const shuffledArcs = shuffle(arcs);
@@ -264,9 +332,9 @@ export async function buildArcRaidersQuestions(): Promise<Question[]> {
   const arcsM    = pair(mediumArcs, "medium", (a, d) => genArc(a, d, arcs));
   const arcsH    = pair(hardArcs,   "hard",   (a, d) => genArc(a, d, arcs));
 
-  const tradersE = pair(shuffle(easyTraderPairs),   "easy",   (p, d) => genTrader(p.trader, p.item, d));
-  const tradersM = pair(shuffle(mediumTraderPairs), "medium", (p, d) => genTrader(p.trader, p.item, d));
-  const tradersH = pair(shuffle(hardTraderPairs),   "hard",   (p, d) => genTrader(p.trader, p.item, d));
+  const tradersE = tradersMix(easyTraderPairs,   easyQuests,   "easy");
+  const tradersM = tradersMix(mediumTraderPairs, mediumQuests, "medium");
+  const tradersH = tradersMix(hardTraderPairs,   hardQuests,   "hard");
 
   const valueE   = pair(shuffle(easyItems),   "easy",   genValue);
   const valueM   = pair(shuffle(mediumItems), "medium", genValue);
