@@ -19,33 +19,6 @@ export type GameEntry = {
   playable: boolean;
 };
 
-/**
- * Inline SVG of a Minecraft-style grass block. mcasset.cloud serves an HTML
- * wrapper page instead of the raw PNG (anti-hotlink protection), so we draw
- * our own pixelated block in SVG and embed it as a data URI.
- */
-const MC_GRASS_BLOCK_SVG = encodeURIComponent(
-  `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96' shape-rendering='crispEdges'>
-    <!-- top face -->
-    <polygon points='48,4 92,28 48,52 4,28' fill='#7bba47' stroke='#1b1b1b' stroke-width='2.5' stroke-linejoin='round'/>
-    <polygon points='14,24 28,16 36,20 22,28' fill='#69a83b' opacity='0.6'/>
-    <polygon points='60,18 70,12 76,15 66,22' fill='#69a83b' opacity='0.6'/>
-    <!-- left face -->
-    <polygon points='4,28 48,52 48,90 4,66' fill='#8b5a2b' stroke='#1b1b1b' stroke-width='2.5' stroke-linejoin='round'/>
-    <rect x='4' y='28' width='44' height='10' fill='#5b8a3a'/>
-    <polygon points='4,28 48,52 48,38 4,18' fill='#5b8a3a' opacity='0.6'/>
-    <polygon points='4,28 48,52 48,38 4,18' fill='#5b8a3a' opacity='0' transform='translate(0 10)'/>
-    <!-- right face -->
-    <polygon points='48,52 92,28 92,66 48,90' fill='#a06b35' stroke='#1b1b1b' stroke-width='2.5' stroke-linejoin='round'/>
-    <polygon points='48,52 92,28 92,38 48,62' fill='#6da045'/>
-    <!-- pixel highlights -->
-    <rect x='14' y='42' width='6' height='6' fill='#704020' opacity='0.5'/>
-    <rect x='28' y='62' width='6' height='6' fill='#704020' opacity='0.5'/>
-    <rect x='62' y='52' width='6' height='6' fill='#704020' opacity='0.4'/>
-    <rect x='78' y='42' width='6' height='6' fill='#704020' opacity='0.4'/>
-  </svg>`
-);
-
 const minecraftPlaceholder: GameConfig = {
   id: "minecraft",
   name: "Minecraft",
@@ -53,7 +26,9 @@ const minecraftPlaceholder: GameConfig = {
   description:
     "Test your overworld instincts: name the mob, the biome, the block, the tool. " +
     "Live data sourced from the PrismarineJS minecraft-data project.",
-  splash: `data:image/svg+xml;utf8,${MC_GRASS_BLOCK_SVG}`,
+  // Real isometric Grass Block sprite served by minecraft.wiki's Special:FilePath
+  // (returns image/png with hotlink-friendly headers).
+  splash: "https://minecraft.wiki/Special:FilePath/Grass_Block_JE7_BE6.png",
   splashAlt: "Minecraft grass block",
   theme: {
     bodyAttr: "minecraft",
@@ -77,8 +52,10 @@ const arcRaidersPlaceholder: GameConfig = {
   description:
     "Salvage your way through 36 questions about ARC Raiders' weapons, items, traders, " +
     "quests, and the deadly ARC machines themselves. Live data from MetaForge.",
-  splash: "https://cdn.metaforge.app/arc-raiders/icons/acoustic-guitar.webp",
-  splashAlt: "ARC Raiders item",
+  // The "Bastion" ARC — iconic heavy minigun unit, the most recognisable
+  // ARC enemy in the game. Image served by MetaForge.
+  splash: "https://unhbvkszwhczbjxgetgk.supabase.co/storage/v1/object/public/images/arc-raiders/icons/bastion.webp",
+  splashAlt: "ARC Raiders Bastion enemy",
   theme: {
     bodyAttr: "arc-raiders",
     primary:    "#d4a14a",
