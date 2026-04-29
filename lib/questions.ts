@@ -39,14 +39,20 @@ const POKE = (id: number) =>
 const ITEM = (slug: string) =>
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${slug}.png`;
 
+import { ICON_EVOLUTION, ICON_TYPES, ICON_POKEDEX, ICON_COLORS } from "./icons";
+
 /**
  * Category headers for the board. Labels reflect what each generator asks:
- *  - Pokémon    → "name this Pokémon"
- *  - Types      → "what type is this Pokémon"
- *  - Evolutions → "what does this evolve into" (uses the "Gyms" id slot)
- *  - Pokédex    → "what is its Pokédex number" (uses the "Characters" id slot)
- *  - Poké Balls → "name this ball"
- *  - Colors     → "what color is this Pokémon"
+ *  - Pokémon    → "name this Pokémon"           (Pikachu sprite from PokeAPI)
+ *  - Types      → "what type is this Pokémon"   (six-segment colour wheel SVG)
+ *  - Evolutions → "what does this evolve into"  (evolution-flash sparkle SVG)
+ *  - Pokédex    → "what is its Pokédex number"  (Pokédex device SVG)
+ *  - Poké Balls → "name this ball"              (Poké Ball item from PokeAPI)
+ *  - Colors     → "what color is this Pokémon"  (painter's palette SVG)
+ *
+ * Note: the "Gyms" / "Characters" id slots are kept for backwards compat with
+ * existing question data — they're rebranded as Evolutions / Pokédex via the
+ * label field.
  */
 export const CATEGORIES: {
   id: Category;
@@ -56,12 +62,12 @@ export const CATEGORIES: {
   /** Pokedex id whose cry could be played for this category */
   cryId: number;
 }[] = [
-  { id: "Pokemon",    label: "Pokémon",     icon: POKE(25),  iconAlt: "Pikachu",   cryId: 25  },
-  { id: "Types",      label: "Types",       icon: POKE(133), iconAlt: "Eevee",     cryId: 133 },
-  { id: "Gyms",       label: "Evolutions",  icon: POKE(133), iconAlt: "Eevee",     cryId: 133 },
-  { id: "Characters", label: "Pokédex",     icon: POKE(151), iconAlt: "Mew",       cryId: 151 },
-  { id: "PokeBalls",  label: "Poké Balls",  icon: ITEM("poke-ball"), iconAlt: "Poké Ball", cryId: 7 },
-  { id: "Colors",     label: "Colors",      icon: POKE(1),   iconAlt: "Bulbasaur", cryId: 1   }
+  { id: "Pokemon",    label: "Pokémon",     icon: POKE(25),          iconAlt: "Pikachu",            cryId: 25  },
+  { id: "Types",      label: "Types",       icon: ICON_TYPES,        iconAlt: "Type colour wheel",  cryId: 133 },
+  { id: "Gyms",       label: "Evolutions",  icon: ICON_EVOLUTION,    iconAlt: "Evolution sparkle",  cryId: 133 },
+  { id: "Characters", label: "Pokédex",     icon: ICON_POKEDEX,      iconAlt: "Pokédex device",     cryId: 151 },
+  { id: "PokeBalls",  label: "Poké Balls",  icon: ITEM("poke-ball"), iconAlt: "Poké Ball",          cryId: 7   },
+  { id: "Colors",     label: "Colors",      icon: ICON_COLORS,       iconAlt: "Painter's palette",  cryId: 1   }
 ];
 
 export function categoryMeta(id: Category) {
