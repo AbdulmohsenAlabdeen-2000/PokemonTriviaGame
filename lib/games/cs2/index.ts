@@ -62,7 +62,8 @@ export const cs2Game: GameConfig = {
       {
         id: "ak-47",
         name: "AK-47",
-        image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgposLOzLITdn2xZ_Iszj7WxRdCtkAfl_RY6N2v3J9CXJlRrYV6Hr1ftxOu605S57s_LzCRl6XQk7H_ezBfll1gSObEJq0Pl",
+        // AK-47 | Redline (Classified) — real Steam CDN URL from ByMykel/CSGO-API
+        image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwlcK3wiFO0POlPPNSI_-RHGavzedxuPUnFniykEtzsWWBzoyuIiifaAchDZUjTOZe4RC_w4buM-6z7wzbgokUyzK-0H08hRGDMA",
         badge: "T side",
         badgeClass: "fire",
         blurb: "The Terrorist staple — high damage, signature spray pattern."
@@ -70,7 +71,8 @@ export const cs2Game: GameConfig = {
       {
         id: "m4a4",
         name: "M4A4",
-        image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxIWkmCQfXt0YqKBAhgIwttsraxRMSlmAS-rkBoMmH1coCSJlAyMFvX-1G_x-vmm9bhuMyfn3pkpGdyt3aPlhepiQYMMLW8JdbqB3WQ",
+        // M4A4 | Asiimov (Covert) — real Steam CDN URL from ByMykel/CSGO-API
+        image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8ypexwiFO0P_6V6V-Kf2cGFidxOp_pewnTii3w0x_tmTRnt2qdHyWaFAjA5UlQOYI5BO5k9bhZunm41OI34NDnjK-0H3pAWw_Rw",
         badge: "CT side",
         badgeClass: "water",
         blurb: "The CT pick — accurate, fast-firing, no silencer drama."
@@ -78,9 +80,11 @@ export const cs2Game: GameConfig = {
       {
         id: "awp",
         name: "AWP",
-        image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYTUjGS-Cu1IDMQwhpcA9osbeyR8DwwwG-rktoYTujINPGdgU-MV6Cqlfqx-_om5C4tcjOzncws3Mn4nuJlBe3hQYMMLVJa2-y",
+        // AWP | Asiimov (Covert) — real Steam CDN URL from ByMykel/CSGO-API
+        image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk7uW-V6V-Kf2cGFidxOp_pewnF3nhxEt0sGnSzN76dH3GOg9xC8FyEORftRe-x9PuYurq71bW3d8UnjK-0H0YSTpMGQ",
         badge: "Sniper",
-        badgeClass: "psychic",
+        // Use grass class for green styling (psychic isn't defined in CSS)
+        badgeClass: "grass",
         blurb: "One shot, one kill. The most iconic CS rifle in existence."
       }
     ]
